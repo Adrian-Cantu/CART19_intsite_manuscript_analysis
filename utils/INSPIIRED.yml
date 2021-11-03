@@ -46,7 +46,7 @@ runId : demoRun
 chunkSize : 30000
 
 # Epigenetic heat map data source
-epigeneticDataDirectory : /data/internal/epigeneticData
+epigeneticDataDirectory : /home/ubuntu/data/epidata
 
 # Heatmap ROC parameters
 rocControls : unmatched

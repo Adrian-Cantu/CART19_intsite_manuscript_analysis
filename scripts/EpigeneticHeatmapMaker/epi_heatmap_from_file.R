@@ -15,7 +15,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 suppressPackageStartupMessages(library(argparse, quietly=TRUE))
-
+set.seed(Sys.getpid())
 parser <- ArgumentParser(description="Make epigenetic heatmap for sites from database")
 parser$add_argument("sample_gtsp", nargs='?', default='sampleName_GTSP.csv')
 parser$add_argument("-c", default="./INSPIIRED.yml", help="path to INSPIIRED configuration file.")

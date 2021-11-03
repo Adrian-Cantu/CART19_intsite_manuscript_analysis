@@ -16,7 +16,7 @@
 #
 
 codeDir <- dirname(sub("--file=", "", grep("--file=", commandArgs(trailingOnly=FALSE), value=T)))
-
+set.seed(Sys.getpid())
 suppressPackageStartupMessages(library("argparse"))
 parser <- ArgumentParser(description="Make genomic heatmap for sites from database")
 parser$add_argument("sample_gtsp", nargs='?', default='sampleName_GTSP.csv')
