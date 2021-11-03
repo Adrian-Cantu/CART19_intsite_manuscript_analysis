@@ -5,7 +5,7 @@ title: |
     | Response Group CR/PRtd only (CLL & ALL Patients)
 output: 
   pdf_document:
-    latex_engine: lualatex
+#    latex_engine: lualatex
     toc: true
     number_sections: false
     toc_depth: 2

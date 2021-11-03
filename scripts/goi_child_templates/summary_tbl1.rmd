@@ -184,10 +184,10 @@ df5_print <- df5 %>%
     )
   ) %>%
   dplyr::rename(
-    "Criteria" = criteria, "Count" = gene_count, "Related (%)" = onco_genes, 
-    "Suppressors (%)" = tumor_sups, "Related (%)" = human_lymph, 
-    "Related (%)" = cosmic_genes, "Related (%)" = tcga_genes, 
-    "Related (%)" = clonal_hema_genes #, "Genes" = go_genes, "Genes" = kegg_genes
+    "Criteria" = criteria, "Count" = gene_count, "Related1 (%)" = onco_genes, 
+    "Suppressors (%)" = tumor_sups, "Related2 (%)" = human_lymph, 
+    "Related3 (%)" = cosmic_genes, "Related4 (%)" = tcga_genes, 
+    "Related5 (%)" = clonal_hema_genes #, "Genes" = go_genes, "Genes" = kegg_genes
   )
 
 options(knitr.kable.NA = "--")

@@ -6,8 +6,10 @@ title: |
     | Response Groups (CR/PRtd & PR/NR)
 output: 
   pdf_document:
-    latex_engine: lualatex
+#    latex_engine: lualatex
     toc: true
+    keep_md: true
+    keep_tex: true
     number_sections: false
     toc_depth: 2
     fig_caption: true
@@ -25,7 +27,7 @@ geometry: margin=0.75in
 ```{r setup, include=FALSE}
 # Options, packages, and parameters --------------------------------------------
 options(stringsAsFactors = FALSE)
-
+options(bitmapType='cairo')
 packs <- c(
   "BiocGenerics", "GenomicRanges", "igraph", "Matrix", "gintools", "spraphal", 
   "data.table", "intergraph", "network", "sna", "ggnet", "dnet", "GO.db", 
@@ -44,6 +46,13 @@ if(!all(packsLoaded)){
   stop("Check dependancies.")
 }
 
+if(!exists('workingDir')) {workingDir <- "/home/ubuntu/data/CART19/CART19_from_git"}
+if(!exists('scriptDir')) {scriptDir <- "/home/ubuntu/data/CART19/CART19_from_git/scripts"}
+if(!exists('utilsDir')) {utilsDir <- "/home/ubuntu/data/CART19/CART19_from_git/utils"}
+if(!exists('outputDir')) {outputDir <- "/home/ubuntu/data/CART19/CART19_from_git/data"}
+if(!exists('numCores')) {numCores <- parallel::detectCores()}
+if(!exists('opts_knit$get("output.dir")')){ opts_knit$set(output.dir = '../reports') }
+options(bitmapType='cairo')
 knitr::opts_chunk$set(
   echo = FALSE,
   fig.path = file.path(workingDir, "reports", "goi_report_figures/"),
@@ -58,7 +67,8 @@ knitr::opts_chunk$set(
   dev = "png",
   results = "asis",
   fig.pos = "H",
-  fig.width = 7
+  fig.width = 7,
+  dev.args = list(type = "cairo-png")
 )
 
 ```
@@ -392,7 +402,9 @@ total_pat_sites <- as.data.frame(cond_uniq_sites, row.names = NULL) %>%
   dplyr::mutate(pat_posid = paste0(patient, "-", posid)) %$%
   dplyr::n_distinct(pat_posid)
 
+```
 
+```{r analysis2, include=FALSE}
 # Analysis ----
 ## Integration site enrichment through frequency analysis ----
 df1 <- dplyr::filter(
@@ -705,7 +717,9 @@ kegg4.1$grp <- cluster_by_list_similarity(
   cores = numCores
 )
 
+```
 
+```{r summarize, include=FALSE}
 ## Summarize findings ----
 # List of all genes identified by each criteria
 potential_genes <- list(
@@ -1006,6 +1020,10 @@ names(df7_list) <- sapply(sup_table_split, function(index){
 
 df7_list <- df7_list[sapply(df7_list, nrow) > 0]
 
+```
+
+```{r writeResults, include=FALSE}
+
 output_impact <- dplyr::select(
     df6, -TDN_sum_abund, -TP_sum_abund, -count, -tcount, -TDN_num_pats_CR,
     -TDN_num_pats_NR, -TP_num_pats_CR, -TP_num_pats_NR, -TDN_num_sites_CR,
@@ -1074,8 +1092,11 @@ In this report, we mined the data collected from integration site sequencing for
 
 A point to keep in mind through all this analysis is that integration sites are sampled from a larger population. It would be rare for all integration sites in a sample to be represented in the sequence data.
 
-```{r summary_tbl1, child = file.path(scriptDir, "goi_child_templates", "summary_tbl1.rmd"), eval = nrow(df5) > 0}
+```{r summary_tbl1, child = file.path("/home/ubuntu/data/CART19/CART19_from_git/scripts", "goi_child_templates", "summary_tbl1.rmd"), eval = nrow(df5) > 0,envir=environment()}
 ```
+
+
+
 
 ```{r upset_fig1, child = file.path(scriptDir, "goi_child_templates", "upset_fig1.rmd"), eval = any(df6$tcount > 1)}
 ```
