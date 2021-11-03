@@ -17,7 +17,7 @@ utilsDir <- file.path(workingDir, "utils")
 outputDir <- file.path(workingDir, "data")
 vcnDir <- file.path(workingDir, "data", "vcn_data")
 
-which_Rscript <- "/home/opt/R-3.4.0/bin/Rscript"
+which_Rscript <- "/home/ubuntu/data/R-3.4.0/bin/Rscript"
 if( !file.exists(which_Rscript) ) which_Rscript <- "Rscript"
 
 if( !dir.exists(outputDir) ){
@@ -55,7 +55,7 @@ source(
 # The following scripts will process the data into a variety of forms, and save
 # the output to the data directory.
 
-# In our experience, we've identified occational sites that are known for
+# In our experience, we've identified occasional sites that are known for
 # mispriming, their position identifiers are listed here and are excluded from
 # the analysis
 potential_mispriming <- c(

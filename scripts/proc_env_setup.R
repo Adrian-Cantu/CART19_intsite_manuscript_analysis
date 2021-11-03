@@ -81,7 +81,7 @@ badActors <- read.delim(
 )[,1]
 
 genomic_features_path <- file.path(scriptDir, "GenomicHeatmapMaker")
-epigenetic_features_path <- "/data/internal/epigeneticData/hg38" # Not archivable
+epigenetic_features_path <- "/home/ubuntu/data/epidata/hg38" # Not archivable
 
 epigenetic_features_files <- list.files(epigenetic_features_path) %>%
   grep("HeLa", ., invert = TRUE, value = TRUE) %>%
