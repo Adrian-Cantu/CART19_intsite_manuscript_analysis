@@ -9,7 +9,7 @@
 
 # Setup ----
 cat("[", paste(Sys.time()), "] Starting setup and checking installed packages.\n")
-
+options(bitmapType='cairo')
 ## Working paths:
 workingDir <- getwd()
 scriptDir <- file.path(workingDir, "scripts")
@@ -300,7 +300,7 @@ if(
     goi_report_template_path <- normalizePath(
       file.path(scriptDir, "supp_goi_report_1.archive.v1.Rmd")
     )
-    options(bitmapType='cairo')
+    
     rmarkdown::render(
       input = goi_report_template_path,
       output_format = "pdf_document", 
