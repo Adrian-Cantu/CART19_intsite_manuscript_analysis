@@ -32,7 +32,7 @@ genomicFreeze <- "hg38"
 
 analysisDate <- Sys.Date()
 
-trial <- "CART19"
+trial <- "CART19_ALL"
 std_clin_trials <- c("959", "04409", "03712")
 
 set.seed(1234)

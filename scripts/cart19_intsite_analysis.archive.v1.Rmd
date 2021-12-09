@@ -6,8 +6,10 @@ author: "Christopher Nobles, Ph.D. and Frederic Bushman, Ph.D."
 date: "generated `r Sys.Date()`"
 output: 
   pdf_document:
-    latex_engine: xelatex
+#    latex_engine: xelatex
     toc: true
+    keep_md: true
+    keep_tex: true
     number_sections: false
     toc_depth: 2
     fig_caption: true
@@ -242,7 +244,9 @@ custom_theme <- theme_bw() +
     legend.title = element_text(color = "black", size = 10),
     plot.title = element_text(color = "black", size = 12)
   )
+```
 
+```{r loadData, include=FALSE}
 # Load patient data ----
 patient_data <- read.csv(
     file.path(outputDir, "cart19_intsite_sample_list.csv")

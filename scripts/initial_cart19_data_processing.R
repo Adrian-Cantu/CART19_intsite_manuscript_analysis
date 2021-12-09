@@ -73,13 +73,13 @@ if( all(c(
   
   connections <- list(
     specimen_db_group = "specimen_management",
-    intsites_db_group = "intsites_cart_20180808",
-    intsites_db_name = "intsites_cart_20180808"
+    intsites_db_group = "intsites_miseq",
+    intsites_db_name = "intsites_miseq"
   )
   
   analysisDate <- as.character(Sys.Date())
   
-  trial <- "CART19"
+  trial <- "CART19_ALL"
   include_TCR_IGH_Data <- FALSE
   
   set.seed(1234)
@@ -236,7 +236,7 @@ if( all(c(
       null <- dbDisconnect(dbConn)
       rm(query, queryCondition, querySelection, metaCols, dbConn, junk)
         
-      if( nrow(specimenData) > 0 ){
+      if( nrow(specimenData) == 0 ){
         stop("Specimen data not acquired from Specimen Database.")
       }
       
@@ -400,7 +400,7 @@ if( all(c(
     
     stopifnot(all(sapply(intsitesData, function(x) class(x) == "GRanges")))
     
-    save.image(file.path(outputDir, "temp.image.RData"))
+    #save.image(file.path(outputDir, "temp.image.RData"))
     
   }else{
     
@@ -486,7 +486,7 @@ if( all(c(
       )
     )
     
-    save.image(file.path(outputDir, "temp.image.RData"))
+    #save.image(file.path(outputDir, "temp.image.RData"))
     
     cat("[", paste(Sys.time()), "] Normalizing multihit clusters...\n")
     
@@ -580,7 +580,7 @@ if( all(c(
     
     ## Filter probably contaminating sites out from samples
     testSites <- split(uniqSites, uniqSites$patient)
-    crossoverSites <- track_clones(testSites, gap = 0L)
+    crossoverSites <- track_clones(as.list(testSites), gap = 0L)
     
     cat("[", paste(Sys.time()), "] Number of crossover sites identified: ", length(crossoverSites), "\n")
     
