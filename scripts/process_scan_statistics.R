@@ -237,13 +237,15 @@ if(
   
   tdn_gr <- format_sites(tdn_sites)
   tp_gr <- format_sites(timepoint_sites)
+
   
-  gene_tdn_sites <- GRangesList(lapply(gene_ranges, function(x){
-    tdn_gr[subjectHits(findOverlaps(x, tdn_gr, ignore.strand = TRUE))]
+  gene_tdn_sites <- GRangesList(lapply(seq(1:length(gene_ranges)), function(x){
+    tdn_gr[subjectHits(findOverlaps(gene_ranges[x,], tdn_gr, ignore.strand = TRUE))]
   }))
   
-  gene_tp_sites <- GRangesList(lapply(gene_ranges, function(x){
-    tp_gr[subjectHits(findOverlaps(x, tp_gr, ignore.strand = TRUE))]
+
+  gene_tp_sites <- GRangesList(lapply(seq(1:length(gene_ranges)), function(x){
+    tp_gr[subjectHits(findOverlaps(gene_ranges[x,], tp_gr, ignore.strand = TRUE))]
   }))
   
   cluster_genes <- data.frame(

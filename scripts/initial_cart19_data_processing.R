@@ -118,9 +118,10 @@ if( all(c(
   )
   
   ## Reference and supporting files ----
-  intsiteSpecimenMetadata <- read.csv(
-    file.path(outputDir, "cart19_intsite_sample_list.csv")
-  )
+  #for remake of metadata
+  #intsiteSpecimenMetadata <- read.csv(
+  #  file.path(outputDir, "cart19_intsite_sample_list.csv")
+  #)
   
   refGenes <- readRDS(
     file.path(utilsDir, "hg38.refSeq.rds")
@@ -143,25 +144,7 @@ if( all(c(
     stringsAsFactors = FALSE
   )[,1]
   
-  ## Develop standard factor scales for celltypes and timepoints ----
-  celltypeLevels <- c(
-    "PB", "PBMC", "PBL", "Whole Blood", "Tcells", "Tcells:CAR+", 
-    "Tcells:CAR+CD4+", "Tcells:CAR+CD8+", "Tcells:CAR+CD8-", "Tcells:CAR-CD4+", 
-    "Tcells:CD4+SP", "Tcells:CAR-CD8+", "Tcells:CAR-CD8-", "Tcells:CD4+", 
-    "Tcells:CD8+", "Tcells:CD8+Naive", "Tcells:CD8+Tscm", "Tcells:CD8+Tcm", 
-    "Tcells:CD8+Tem", "Tcells:CD8+Te", "Tcells:CD8+Tm", "Tcells:CD4+CD8+", 
-    "Tcells:CD4+CD8+DP", "Tcells:CD4+CD8+DN", "Bone Marrow", "BM", "BMMC", 
-    "BM:CAR+", "CD3-"
-  )
-  
-  timepointLevels <- c(
-    "d-10", "d-1", "d0", "d1", "d5", "d7", "d9", "d10", "d11", "d13", "d14", 
-    "d15", "d17", "d21", "d23", "d25", "d28", "d30", "d35", "d36", "d42", "d49",
-    "d50", "m2", "d63", "d75", "d90", "m3", "d92", "d120", "d121", "m4", "d133",
-    "d147", "m5", "d169", "m6", "d204", "m9", "m12", "y1", "d442", "m15", "m18", 
-    "y1.5", "m20", "m21", "d720", "m24", "y2", "d801",  "y2.5", "m32", "y3", 
-    "y4", "d1584", "y4.5", "m60", "y5", "y5.5", "y6", "y6.5", "y7", "y8"
-  ) 
+
   
   # Process data from database and acquired files ----
   ## Acquire all patient data available in the specimen management database ----
@@ -198,8 +181,8 @@ if( all(c(
           celltype = ifelse(
             as.character(celltype) == "Whole Blood", 
             "PBL", as.character(celltype)),
-          celltype = factor(celltype, levels = celltypeLevels),
-          timepoint = factor(timepoint, levels = timepointLevels)
+          celltype = factor(celltype, levels = .celltypeLevels),
+          timepoint = factor(timepoint, levels = .timepointLevels)
         ) %>%
         dplyr::select(trial, patient, celltype, timepoint, specimenaccnum) %>% 
         arrange(specimenaccnum)
@@ -223,7 +206,11 @@ if( all(c(
       )
       
       queryCondition <- paste0("WHERE Trial = '", trial, "'")
-      query <- paste(querySelection, queryCondition, sep = " ")
+      if (test_only) {
+        query <- paste(querySelection, queryCondition, 'LIMIT 8', sep = " ")
+      } else {
+        query <- paste(querySelection, queryCondition, sep = " ")
+      }
       specimenData <- dbGetQuery(dbConn, query)
       names(specimenData) <- tolower(names(specimenData))
       
@@ -255,11 +242,11 @@ if( all(c(
     )
     
     specimenData$timepoint <- factor(
-      specimenData$timepoint, levels = timepointLevels
+      specimenData$timepoint, levels = .timepointLevels
     )
     
     specimenData$celltype <- factor(
-      specimenData$celltype, levels = celltypeLevels
+      specimenData$celltype, levels = .celltypeLevels
     )
     
     # Save specimen data.
@@ -405,6 +392,12 @@ if( all(c(
   }else{
     
     cat("[", paste(Sys.time()), "] Processing integration site data...\n")
+    #dbIntsitesData_resp <- dbIntsitesData
+    #dbIntsitesData <- dbIntsitesData_resp
+    #kk <-10000000
+    #dbIntsitesData$uniqSites <- head(dbIntsitesData$uniqSites, n=kk)
+    #dbIntsitesData$multihits <- head(dbIntsitesData$multihits, n=kk)
+    
     intsitesData <- lapply(
       seq_along(dbIntsitesData), 
       function(i){

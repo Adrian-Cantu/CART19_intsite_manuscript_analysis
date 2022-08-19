@@ -118,25 +118,6 @@ hgnc_complete <- dplyr::filter(hgnc_complete, !grepl("withdrawn", symbol)) %>%
       refseq_accession, "|", uniprot_ids)
   )
 
-## Develop standard factor scales for celltypes and timepoints ----
-celltypeLevels <- c(
-  "PB", "PBMC", "PBL", "Whole Blood", "Tcells", "Tcells:CAR+", 
-  "Tcells:CAR+CD4+", "Tcells:CAR+CD8+", "Tcells:CAR+CD8-", "Tcells:CAR-CD4+", 
-  "Tcells:CD4+SP", "Tcells:CAR-CD8+", "Tcells:CAR-CD8-", "Tcells:CD4+", 
-  "Tcells:CD8+", "Tcells:CD8+Naive", "Tcells:CD8+Tscm", "Tcells:CD8+Tcm", 
-  "Tcells:CD8+Tem", "Tcells:CD8+Te", "Tcells:CD8+Tm", "Tcells:CD4+CD8+", 
-  "Tcells:CD4+CD8+DP", "Tcells:CD4+CD8+DN", "Bone Marrow", "BM", "BMMC", 
-  "BM:CAR+", "CD3-"
-)
-
-timepointLevels <- c(
-  "d-10", "d-1", "d0", "d1", "d5", "d7", "d9", "d10", "d11", "d13", "d14", 
-  "d15", "d17", "d21", "d23", "d25", "d28", "d30", "d35", "d36", "d42", "d49",
-  "d50", "m2", "d63", "d75", "d90", "m3", "d92", "d120", "d121", "m4", "d133",
-  "d147", "m5", "d169", "m6", "d204", "m9", "m12", "y1", "d442", "m15", "m18", 
-  "y1.5", "m20", "m21", "d720", "m24", "y2", "d801",  "y2.5", "m32", "y3", 
-  "y4", "d1584", "y4.5", "m60", "y5", "y5.5", "y6", "y6.5", "y7", "y8"
-)
 
 # Load patient data ----
 patient_data <- read.csv(
@@ -171,9 +152,9 @@ patient_data <- read.csv(
       "CR_PRtd", "PR_NR"), levels = c("CR_PRtd", "PR_NR"))) %>%
   dplyr::arrange(disease, response)
 
-patient_data[patient_data$patient == "p03712-12",]$response <- "None"
-patient_data[patient_data$patient == "p03712-12",]$simple_response <- "None"
-patient_data[patient_data$patient == "p03712-12",]$general_response <- "Non-responder"
+#patient_data[patient_data$patient == "p03712-12",]$response <- "None"
+#patient_data[patient_data$patient == "p03712-12",]$simple_response <- "None"
+#patient_data[patient_data$patient == "p03712-12",]$general_response <- "Non-responder"
 
 std_clin_patients <- patient_data %>%
   dplyr::filter(clin_trial %in% std_clin_trials) %$%
@@ -205,7 +186,7 @@ specimen_data <- readRDS(file.path(outputDir, file)) %>%
   dplyr::mutate(
     celltype = ifelse(
       as.character(celltype) == "PBMC", "PBL", as.character(celltype)),
-    celltype = factor(celltype, levels = celltypeLevels))
+    celltype = factor(celltype, levels = .celltypeLevels))
 
 if( !all(patient_data$patient %in% specimen_data$patient) ){
   warning("Not all specimens in database, using custom data.")
@@ -227,8 +208,8 @@ if( !all(patient_data$patient %in% specimen_data$patient) ){
       celltype = ifelse(
         as.character(celltype) == "Whole Blood", 
         "PBL", as.character(celltype)),
-      celltype = factor(celltype, levels = celltypeLevels),
-      timepoint = factor(timepoint, levels = timepointLevels)) %>%
+      celltype = factor(celltype, levels = .celltypeLevels),
+      timepoint = factor(timepoint, levels = .timepointLevels)) %>%
     dplyr::select(trial, patient, celltype, timepoint, specimenaccnum) %>% 
     dplyr::arrange(specimenaccnum)
 }

@@ -112,7 +112,7 @@ if(
     dplyr::filter(patient %in% c("p04409-01", "p04409-02")) %>%
     dplyr::arrange(timepoint, celltype) %>%
     dplyr::mutate(fct_timepoint = as.integer(timepoint)) %>%
-    dplyr::filter(fct_timepoint > grep("m12", timepointLevels)) %$%
+    dplyr::filter(fct_timepoint > grep("m12", .timepointLevels)) %$%
     specimenaccnum
   
   cond_uniq_sites <- cond_uniq_sites[
@@ -145,6 +145,8 @@ if(
   )
   
   # Split unique sites to pre and post transduction sets
+  kknames <- names(cond_uniq_sites)
+  names(cond_uniq_sites) <- NULL
   tdn_sites <- cond_uniq_sites[cond_uniq_sites$timepoint == "d0"]
   tdn_sites <- tdn_sites[tdn_sites$patient %in% std_clin_patients]
   timepoint_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]

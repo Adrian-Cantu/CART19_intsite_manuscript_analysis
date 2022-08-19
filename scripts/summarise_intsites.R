@@ -25,9 +25,11 @@ if(
     paste0("chr", c(1:22, "X", "Y", "M"))]
   
   #CpG_islands <- getCpG_islands(genomicFreeze)
-  CpG_data <- cpg <- getUCSCtable(
-      "cpgIslandExt", "CpG Islands", freeze = "hg38"
-    ) %>%
+  # CpG_data <- cpg <- getUCSCtable(
+  #     "cpgIslandExt", "CpG Islands", freeze = "hg38"
+  #   ) %>%
+  bsession <- makeUCSCsession('hg18')
+  CpG_data <- cpg <- getTable(ucscTableQuery(bsession, track = "CpG Islands", table = "cpgIslandExt")) %>%
     dplyr::filter(chrom %in% paste0("chr", c(1:22, "X", "Y", "M")))
   
   CpG_islands <- GenomicRanges::GRanges(
@@ -40,11 +42,13 @@ if(
   )
   
   mcols(CpG_islands) <- CpG_data
-  
+  ## for ml
   #DNaseI <- suppressWarnings(getDNaseI(genomicFreeze))
-  DNaseI_data <- getUCSCtable(
-      "wgEncodeRegDnaseClustered", "DNase Clusters", freeze = "hg38"
-    ) %>%
+  # DNaseI_data <- getUCSCtable(
+  #     "wgEncodeRegDnaseClustered", "DNase Clusters", freeze = "hg38"
+  #   ) %>%
+    
+  DNaseI_data <- getTable(ucscTableQuery(bsession, track = "DNase Clusters", table = "wgEncodeRegDnaseClustered")) %>%
     dplyr::filter(chrom %in% paste0("chr", c(1:22, "X", "Y", "M")))
   
   DNaseI <- GenomicRanges::GRanges(
@@ -68,7 +72,7 @@ if(
   
   ## Load epigenetic features
   epi_names <- str_split(epigenetic_features_files, "/")
-  epi_names <- sapply(epi_names, "[[", 6)
+  epi_names <- sapply(epi_names, "[[", 7)
   epi_names <- str_remove(epi_names, ".RData") %>% str_replace_all("-", "_")
   
   epi_env <- new.env()
@@ -286,7 +290,7 @@ if(
 
   # Timepoint Summary ----------------------------------------------------------
   cond_uniq_sites$timepoint <- factor(
-    cond_uniq_sites$timepoint, levels = timepointLevels)
+    cond_uniq_sites$timepoint, levels = .timepointLevels)
   
   gen_epi_timepoint_summary <- gen_epi_stats %>%
     dplyr::select(-posid) %>%
@@ -411,7 +415,7 @@ if(
 
   # Celltype Summary -------------------------------------------------------------
   cond_uniq_sites$celltype <- factor(
-    cond_uniq_sites$celltype, levels = celltypeLevels)
+    cond_uniq_sites$celltype, levels = .celltypeLevels)
   
   celltype_summary <- data.frame(
     "celltype" = names(split(cond_uniq_sites, cond_uniq_sites$celltype)),

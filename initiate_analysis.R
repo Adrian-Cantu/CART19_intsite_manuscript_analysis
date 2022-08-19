@@ -7,6 +7,7 @@
 # (using the Rscript command) in the repository directory. 
 # (i.e. ~/CART19_intsite_manuscript_analysis)
 
+test_only <- TRUE
 # Setup ----
 cat("[", paste(Sys.time()), "] Starting setup and checking installed packages.\n")
 options(bitmapType='cairo')
@@ -33,8 +34,8 @@ numCores <- as.numeric(commandArgs(trailingOnly = TRUE)[
 
 if( length(numCores) == 0 ) numCores <- parallel::detectCores()
 
-numCores <- min(numCores, parallel::detectCores())
-
+#$numCores <- min(numCores, parallel::detectCores())
+numCores <- 15
 cat("[", paste(Sys.time()), "] Number of cores to use: ", numCores, "\n")
 
 # Starting initial processing
