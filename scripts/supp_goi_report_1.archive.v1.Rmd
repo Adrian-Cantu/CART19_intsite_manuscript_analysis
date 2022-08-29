@@ -317,7 +317,9 @@ gene_impact <- readRDS(
     aliasIDs = hgnc_complete$extended_alias,
     sep = "|", remove_absent_IDs = NULL, quiet = TRUE))
 
+```
 
+```{r pp2}
 # Import KEGG pathways ----
 k_list <- keggList("hsa")
 k_path <- keggList("pathway", "hsa")
@@ -348,9 +350,9 @@ Gobp <- unlist(as.list(GO.db::GOBPCHILDREN)) %>%
   data.frame(
     "vi" = str_extract(names(.), "[\\w:]+"),
     "vj" = .,
-    "annotation" = str_extract(names(.), "[\\w]+$")) %>%
+    "annotation" = str_extract(names(.), "(?<=\\.).+$")) %>%
   dplyr::filter(!is.na(vj)) %>%
-  dplyr::filter(annotation %in% c("is_a", "part_of")) %>%
+  dplyr::filter(annotation %in% c("isa", "part of")) %>%
   construct_graph(E = ., mode = "directed")
 
 ignored_GOTERMs <- names(V(Gobp)[which(layout_as_tree(Gobp)[,2] >= 9)])
