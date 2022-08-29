@@ -35,7 +35,7 @@ numCores <- as.numeric(commandArgs(trailingOnly = TRUE)[
 if( length(numCores) == 0 ) numCores <- parallel::detectCores()
 
 #$numCores <- min(numCores, parallel::detectCores())
-numCores <- 15
+numCores <- 45
 cat("[", paste(Sys.time()), "] Number of cores to use: ", numCores, "\n")
 
 # Starting initial processing

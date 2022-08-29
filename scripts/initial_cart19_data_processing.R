@@ -79,7 +79,7 @@ if( all(c(
   
   analysisDate <- as.character(Sys.Date())
   
-  trial <- "CART19_ALL"
+  trial <- "UPENN_CART19_ALL"
   include_TCR_IGH_Data <- FALSE
   
   set.seed(1234)
@@ -229,11 +229,12 @@ if( all(c(
       
     }
     
-    if( all(intsiteSpecimenMetadata$GTSP %in% specimenData$specimenaccnum) ){
-      cat("[", paste(Sys.time()), "] Specimen data acquired.\n")
-    }else{
-      warning("[ Warning ] Missing specimens in the database, using input annotations.")
-    }
+    
+    # if( all(intsiteSpecimenMetadata$GTSP %in% specimenData$specimenaccnum) ){
+    #   cat("[", paste(Sys.time()), "] Specimen data acquired.\n")
+    # }else{
+    #   warning("[ Warning ] Missing specimens in the database, using input annotations.")
+    # }
     
   
     # Special condition, same patient with two identifiers.
