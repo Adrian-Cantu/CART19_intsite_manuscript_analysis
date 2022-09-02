@@ -152,7 +152,7 @@ intsiteSpecimenMetadata <- read.csv(
 
 ref_genes <- readRDS(file.path(utilsDir, "hg38.refSeq.rds"))
 
-ref_genes$name2 <- alias_arbiter(
+ref_genes$name2 <- alias_arbiter( # warning with alternatives chromosomes
   IDs = ref_genes$name2, 
   RefIDs = hgnc_complete$symbol,
   aliasIDs = hgnc_complete$extended_alias,
@@ -284,10 +284,11 @@ custom_theme <- theme_bw() +
 data_files <- list.files(outputDir)
 
 file <- grep("specimen_data", data_files, value = TRUE)
-specimen_data <- readRDS(file.path(outputDir, file))
+specimen_data <- readRDS(file.path(outputDir, file)) #TOCHANGE maybe never used?
 
-cond_uniq_sites <- readRDS(file.path(outputDir, "condensed_intsites.rds"))
-
+cond_uniq_sites <- readRDS(file.path(outputDir, "condensed_intsites.rds")) #TOCHANGE
+# I need to replace this with my own data
+#cond_uniq_sites %>% as.data.frame(row.names = NULL) %>% head()
 cond_uniq_sites <- cond_uniq_sites[
   str_extract(cond_uniq_sites$patient, "[0-9]+") %in% 
     c("959", "03712", "04409")
@@ -295,9 +296,9 @@ cond_uniq_sites <- cond_uniq_sites[
 
 tp_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
 
-cluster_list <- readRDS(file.path(outputDir, "cart19_clusters.rds"))
+cluster_list <- readRDS(file.path(outputDir, "cart19_clusters.rds")) # TOCHANGE, not sure where this comes from (scan stats)
 
-gene_stats <- read.csv(
+gene_stats <- read.csv( # TOCHANGE, not sure where this comes from
     file.path(outputDir, "cart19_gene_stats.csv")) %>%
   dplyr::mutate(gene_name = alias_arbiter(
     IDs = gene_name,
@@ -305,7 +306,7 @@ gene_stats <- read.csv(
     aliasIDs = hgnc_complete$extended_alias,
     sep = "|", remove_absent_IDs = NULL, quiet = TRUE))
 
-gene_impact <- readRDS(
+gene_impact <- readRDS( # TOCHANGE, not sure where this comes from
     file.path(outputDir, "cart19_gene_impact.rds")) %>%
   dplyr::select(
     -ort_fisher_test, -ort_fisher_test_CR, -ort_fisher_test_NR
@@ -338,7 +339,7 @@ k_pathList <- k_pathList[k_pathList %in% gene_impact$gene_name]
 k_pathList <- split(k_pathList, names(k_pathList))
 k_genes <- unique(unlist(k_pathList))
 
-k_path_df <- plyr::ldply(
+k_path_df <- plyr::ldply( # a PATH/GENE dataframe
   k_pathList, 
   function(x){data.frame(gene_sym = x)}, 
   .id = "path"
@@ -386,7 +387,7 @@ names(all_GOBP_list) <- names(all_GOBP)
 all_GOBP_list <- all_GOBP_list[lengths(all_GOBP_list) > 0]
 all_GOBP_list <- all_GOBP_list[names(all_GOBP_list) %in% names(V(Gobp))]
 
-all_GOBP_df <- plyr::ldply(
+all_GOBP_df <- plyr::ldply( #a gene/GOTERM df, many to many relation
   all_GOBP_list, function(x){data.frame(gene_sym = x)}, .id = "go_term")
 
 stopCluster(buster)
