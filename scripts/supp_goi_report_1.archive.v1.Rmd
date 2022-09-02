@@ -146,7 +146,7 @@ read_special_genelist <- function(file){
 }
 
 ## Reference and supporting files ----
-intsiteSpecimenMetadata <- read.csv(
+intsiteSpecimenMetadata <- read.csv( #TOCHANGE
   file.path(outputDir, "cart19_intsite_sample_list.csv")
 )
 
@@ -283,8 +283,8 @@ custom_theme <- theme_bw() +
 # Load integration site data if available ----
 data_files <- list.files(outputDir)
 
-file <- grep("specimen_data", data_files, value = TRUE)
-specimen_data <- readRDS(file.path(outputDir, file)) #TOCHANGE maybe never used?
+#file <- grep("specimen_data", data_files, value = TRUE)
+#specimen_data <- readRDS(file.path(outputDir, file)) #TOCHANGE maybe never used?
 
 cond_uniq_sites <- readRDS(file.path(outputDir, "condensed_intsites.rds")) #TOCHANGE
 # I need to replace this with my own data
@@ -296,7 +296,7 @@ cond_uniq_sites <- cond_uniq_sites[
 
 tp_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
 
-cluster_list <- readRDS(file.path(outputDir, "cart19_clusters.rds")) # TOCHANGE, not sure where this comes from (scan stats)
+#cluster_list <- readRDS(file.path(outputDir, "cart19_clusters.rds")) # TOCHANGE, not sure where this comes from (scan stats)
 
 gene_stats <- read.csv( # TOCHANGE, not sure where this comes from
     file.path(outputDir, "cart19_gene_stats.csv")) %>%
@@ -641,84 +641,84 @@ kegg3.2$grp <- cluster_by_list_similarity(
 
 
 ## Identify genes within scan stats clusters ----
-clus_df <- as.data.frame(cluster_list$timepoint_clusters, row.names = NULL) %>%
-  dplyr::mutate(id = seq_len(n())) %>%
-  dplyr::group_by(id) %>%
-  dplyr::mutate(
-    num_genes = suppressWarnings(length(unique(ref_genes$name2[
-      S4Vectors::subjectHits(GenomicRanges::findOverlaps(
-        cluster_list$timepoint_clusters[id], ref_genes
-      ))
-    ]))),
-    TP_num_sites = suppressWarnings(length(unique(tp_sites$posid[
-      S4Vectors::subjectHits(GenomicRanges::findOverlaps(
-        cluster_list$timepoint_clusters[id], tp_sites
-      ))
-    ])))
-  ) %>%
-  dplyr::ungroup() %>%
-  dplyr::arrange(target.min) %>%
-  dplyr::mutate(
-    clus.origin = "Timepoint",
-    id = seq_len(n())
-  )
-
-cluster_genes <- suppressWarnings(
-  unique(ref_genes$name2[
-    S4Vectors::subjectHits(GenomicRanges::findOverlaps(
-      cluster_list$timepoint_clusters, ref_genes
-    ))
-  ])
-)
-
-df4 <- dplyr::filter(
-    gene_impact, 
-    gene_name %in% cluster_genes, 
-    Cluster_target.min > 0,
-    TP_num_sites >= 5) %>% 
-  dplyr::arrange(Cluster_target.min, desc(TP_num_sites))
-
-df4.1 <- dplyr::select(
-    df4, gene_name, TP_num_patients, TDN_num_sites, TP_num_sites, 
-    Cluster_target.min, On_Onco_List
-  ) %>%
-  dplyr::rename(
-    "Gene" = gene_name, "Num. Patients" = TP_num_patients, 
-    "TDN Sites" = TDN_num_sites, "Patient Sites" = TP_num_sites, 
-    "Cluster Min. FDR" = Cluster_target.min, "Onco-Related" = On_Onco_List
-  )
-
-go4.1 <- fisher_hyper_GO_test(
-  df4$gene_name, all_GOBP_list, odds = FALSE, p_adjust = 'BH', 
-  lower_tail = FALSE, cores = numCores
-)
-
-go4.1 <- dplyr::filter(
-  go4.1, overlap_size >= min_GO_ovlp, GO_size <= max_GO_size, !is.na(GO_Term)
-)
-
-go4.1$grp <- cluster_by_list_similarity(
-  keys = go4.1$GO_ID, keyList = all_GOBP_list, limitValues = df4$gene_name,
-  cores = numCores
-)
-
-go4.1$grp.go <- membership(cluster_louvain(
-  as.undirected(induced_subgraph(Gobp, go4.1$GO_ID))))[go4.1$GO_ID]
-  
-kegg4.1 <- fisher_hyper_KEGG_test(
-  df4$gene_name, k_pathList, odds = FALSE, p_adjust = 'BH', 
-  lower_tail = FALSE, cores = numCores
-)
-
-kegg4.1 <- dplyr::filter(
-  kegg4.1, overlap_size >= min_KEGG_ovlp, 
-  KEGG_size <= max_KEGG_size, !is.na(KEGG_Term)
-)
-
-kegg4.1$grp <- cluster_by_list_similarity(
-  keys = kegg4.1$path_id, keyList = k_pathList, limitValues = df4$gene_name, 
-  cores = numCores
-)
+# clus_df <- as.data.frame(cluster_list$timepoint_clusters, row.names = NULL) %>%
+#   dplyr::mutate(id = seq_len(n())) %>%
+#   dplyr::group_by(id) %>%
+#   dplyr::mutate(
+#     num_genes = suppressWarnings(length(unique(ref_genes$name2[
+#       S4Vectors::subjectHits(GenomicRanges::findOverlaps(
+#         cluster_list$timepoint_clusters[id], ref_genes
+#       ))
+#     ]))),
+#     TP_num_sites = suppressWarnings(length(unique(tp_sites$posid[
+#       S4Vectors::subjectHits(GenomicRanges::findOverlaps(
+#         cluster_list$timepoint_clusters[id], tp_sites
+#       ))
+#     ])))
+#   ) %>%
+#   dplyr::ungroup() %>%
+#   dplyr::arrange(target.min) %>%
+#   dplyr::mutate(
+#     clus.origin = "Timepoint",
+#     id = seq_len(n())
+#   )
+# 
+# cluster_genes <- suppressWarnings(
+#   unique(ref_genes$name2[
+#     S4Vectors::subjectHits(GenomicRanges::findOverlaps(
+#       cluster_list$timepoint_clusters, ref_genes
+#     ))
+#   ])
+# )
+# 
+# df4 <- dplyr::filter(
+#     gene_impact, 
+#     gene_name %in% cluster_genes, 
+#     Cluster_target.min > 0,
+#     TP_num_sites >= 5) %>% 
+#   dplyr::arrange(Cluster_target.min, desc(TP_num_sites))
+# 
+# df4.1 <- dplyr::select(
+#     df4, gene_name, TP_num_patients, TDN_num_sites, TP_num_sites, 
+#     Cluster_target.min, On_Onco_List
+#   ) %>%
+#   dplyr::rename(
+#     "Gene" = gene_name, "Num. Patients" = TP_num_patients, 
+#     "TDN Sites" = TDN_num_sites, "Patient Sites" = TP_num_sites, 
+#     "Cluster Min. FDR" = Cluster_target.min, "Onco-Related" = On_Onco_List
+#   )
+# 
+# go4.1 <- fisher_hyper_GO_test(
+#   df4$gene_name, all_GOBP_list, odds = FALSE, p_adjust = 'BH', 
+#   lower_tail = FALSE, cores = numCores
+# )
+# 
+# go4.1 <- dplyr::filter(
+#   go4.1, overlap_size >= min_GO_ovlp, GO_size <= max_GO_size, !is.na(GO_Term)
+# )
+# 
+# go4.1$grp <- cluster_by_list_similarity(
+#   keys = go4.1$GO_ID, keyList = all_GOBP_list, limitValues = df4$gene_name,
+#   cores = numCores
+# )
+# 
+# go4.1$grp.go <- membership(cluster_louvain(
+#   as.undirected(induced_subgraph(Gobp, go4.1$GO_ID))))[go4.1$GO_ID]
+#   
+# kegg4.1 <- fisher_hyper_KEGG_test(
+#   df4$gene_name, k_pathList, odds = FALSE, p_adjust = 'BH', 
+#   lower_tail = FALSE, cores = numCores
+# )
+# 
+# kegg4.1 <- dplyr::filter(
+#   kegg4.1, overlap_size >= min_KEGG_ovlp, 
+#   KEGG_size <= max_KEGG_size, !is.na(KEGG_Term)
+# )
+# 
+# kegg4.1$grp <- cluster_by_list_similarity(
+#   keys = kegg4.1$path_id, keyList = k_pathList, limitValues = df4$gene_name, 
+#   cores = numCores
+# )
 
 ```
 
