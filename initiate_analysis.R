@@ -227,49 +227,49 @@ write.csv(
 
 rm(std_data, std_heatmap_data, std_heatmap_sample_info)
 
-# Call for Genomic Heatmap
-if( !file.exists("data/manuscript_genomic_std_heatmap/roc.res.rds") ){
-  
-  system(
-    paste0(
-      which_Rscript, 
-      " scripts/GenomicHeatmapMaker/genomic_heatmap_from_file.R ",
-      "data/manuscript_std_heatmap_samples.csv ",
-      "-f data/manuscript_std_heatmap_sites.csv ",
-      "-o data/manuscript_genomic_std_heatmap ",
-      "-r hg38 -c utils/INSPIIRED.yml ",
-      "-u utils"
-    ), 
-    wait = TRUE
-  )
-  
-  while( !file.exists("data/manuscript_genomic_std_heatmap/roc.res.rds") ){
-    Sys.sleep(10)
-  }
-  
-}
-
-# Call for Epigenetic Heatmap 
-if( !file.exists("data/manuscript_epi_std_heatmap/roc.res.rds") ){
-  
-  system(
-    paste0(
-      which_Rscript,
-      " scripts/EpigeneticHeatmapMaker/epi_heatmap_from_file.R ",
-      "data/manuscript_std_heatmap_samples.csv ",
-      "-f data/manuscript_std_heatmap_sites.csv ",
-      "-t scripts/EpigeneticHeatmapMaker/CD4_epi_types.txt ",
-      "-o data/manuscript_epi_std_heatmap ",
-      "-c utils/INSPIIRED.yml"
-    ),
-    wait = TRUE
-  )
-  
-  while( !file.exists("data/manuscript_epi_std_heatmap/roc.res.rds") ){
-    Sys.sleep(10)
-  }
-  
-}
+# # Call for Genomic Heatmap
+# if( !file.exists("data/manuscript_genomic_std_heatmap/roc.res.rds") ){
+#   
+#   system(
+#     paste0(
+#       which_Rscript, 
+#       " scripts/GenomicHeatmapMaker/genomic_heatmap_from_file.R ",
+#       "data/manuscript_std_heatmap_samples.csv ",
+#       "-f data/manuscript_std_heatmap_sites.csv ",
+#       "-o data/manuscript_genomic_std_heatmap ",
+#       "-r hg38 -c utils/INSPIIRED.yml ",
+#       "-u utils"
+#     ), 
+#     wait = TRUE
+#   )
+#   
+#   while( !file.exists("data/manuscript_genomic_std_heatmap/roc.res.rds") ){
+#     Sys.sleep(10)
+#   }
+#   
+# }
+# 
+# # Call for Epigenetic Heatmap 
+# if( !file.exists("data/manuscript_epi_std_heatmap/roc.res.rds") ){
+#   
+#   system(
+#     paste0(
+#       which_Rscript,
+#       " scripts/EpigeneticHeatmapMaker/epi_heatmap_from_file.R ",
+#       "data/manuscript_std_heatmap_samples.csv ",
+#       "-f data/manuscript_std_heatmap_sites.csv ",
+#       "-t scripts/EpigeneticHeatmapMaker/CD4_epi_types.txt ",
+#       "-o data/manuscript_epi_std_heatmap ",
+#       "-c utils/INSPIIRED.yml"
+#     ),
+#     wait = TRUE
+#   )
+#   
+#   while( !file.exists("data/manuscript_epi_std_heatmap/roc.res.rds") ){
+#     Sys.sleep(10)
+#   }
+#   
+# }
   
 # Report generation ----
 # After heatmap generation has completed, the remaining analysis is focused in
