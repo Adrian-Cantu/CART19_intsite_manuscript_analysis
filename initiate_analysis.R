@@ -125,13 +125,13 @@ potential_mispriming <- c(
 
 # Create a processing environment
 
-# Setup processing environment ----
-cat("[", paste(Sys.time()), "] Running 'proc_env_setup.R'... (Processing step 1 of 7)\n")
-suppressMessages(source(file = file.path(scriptDir, "proc_env_setup.R")))
-
-# Condense and annotate unique sites ----
-cat("[", paste(Sys.time()), "] Running 'uniq_process_and_annotate.R'... (Processing step 2 of 7)\n")
-suppressMessages(source(file = file.path(scriptDir, "uniq_process_and_annotate.R")))
+# # Setup processing environment ----
+# cat("[", paste(Sys.time()), "] Running 'proc_env_setup.R'... (Processing step 1 of 7)\n")
+# suppressMessages(source(file = file.path(scriptDir, "proc_env_setup.R")))
+# 
+# # Condense and annotate unique sites ----
+# cat("[", paste(Sys.time()), "] Running 'uniq_process_and_annotate.R'... (Processing step 2 of 7)\n")
+# suppressMessages(source(file = file.path(scriptDir, "uniq_process_and_annotate.R")))
 
 # Process scan statistics on unique sites ----
 # cat("[", paste(Sys.time()), "] Running 'process_scan_statistics.R'... (Processing step 3 of 7)\n")

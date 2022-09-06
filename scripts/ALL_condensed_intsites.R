@@ -1,7 +1,7 @@
 library(gt23)
 library(RMySQL)
 library(tidyverse)
-#library(GenomicRanges)
+library(GenomicRanges)
 dbConn  <- dbConnect(MySQL(), group='specimen_management')
 ss <- c('UPENN_CART19_CLL','UPENN_CART19_ALL','Gill_CART19_18415')
 arr <-paste0("SELECT * FROM gtsp WHERE Trial IN ('",paste(ss,collapse = "','"),"')")
@@ -55,7 +55,15 @@ setdiff(colnames(condensed_intsites),colnames(new_condensed)) ## TODO migth stil
 head(condensed_intsites)
 head(new_condensed)
 
-saveRDS(new_condensed,'ALL_condensed_intsites.rds')
+new_cond_granges <- new_condensed %>% 
+  GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+
+seqlevels(new_cond_granges) <- paste0("chr", c(1:22, "X", "Y", "M"))
+
+genome_sequence <- BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38
+seqinfo(new_cond_granges) <- seqinfo(genome_sequence)
+
+saveRDS(new_cond_granges,'ALL_condensed_intsites.rds')
 
 # condensed_intsites %>% 
 #   filter(nearest_gene != gene_id_wo_annot) %>%

@@ -46,10 +46,10 @@ if(!all(packsLoaded)){
   stop("Check dependancies.")
 }
 
-if(!exists('workingDir')) {workingDir <- "/home/ubuntu/data/CART19/CART19_from_git"}
-if(!exists('scriptDir')) {scriptDir <- "/home/ubuntu/data/CART19/CART19_from_git/scripts"}
-if(!exists('utilsDir')) {utilsDir <- "/home/ubuntu/data/CART19/CART19_from_git/utils"}
-if(!exists('outputDir')) {outputDir <- "/home/ubuntu/data/CART19/CART19_from_git/data"}
+if(!exists('workingDir')) {workingDir <- "/home/ubuntu/data/CART19/CART19_from_git2"}
+if(!exists('scriptDir')) {scriptDir <- "/home/ubuntu/data/CART19/CART19_from_git2/scripts"}
+if(!exists('utilsDir')) {utilsDir <- "/home/ubuntu/data/CART19/CART19_from_git2/utils"}
+if(!exists('outputDir')) {outputDir <- "/home/ubuntu/data/CART19/CART19_from_git2/data"}
 if(!exists('numCores')) {numCores <- parallel::detectCores()}
 if(!exists('opts_knit$get("output.dir")')){ opts_knit$set(output.dir = '../reports') }
 options(bitmapType='cairo')
@@ -286,7 +286,7 @@ data_files <- list.files(outputDir)
 #file <- grep("specimen_data", data_files, value = TRUE)
 #specimen_data <- readRDS(file.path(outputDir, file)) #TOCHANGE maybe never used?
 
-cond_uniq_sites <- readRDS(file.path(outputDir, "condensed_intsites.rds")) #TOCHANGE
+cond_uniq_sites <- readRDS(file.path(outputDir, "condensed_intsites.rds")) #TODO
 # I need to replace this with my own data
 #cond_uniq_sites %>% as.data.frame(row.names = NULL) %>% head()
 cond_uniq_sites <- cond_uniq_sites[
@@ -294,11 +294,11 @@ cond_uniq_sites <- cond_uniq_sites[
     c("959", "03712", "04409")
 ]
 
-tp_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
+#tp_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
 
-#cluster_list <- readRDS(file.path(outputDir, "cart19_clusters.rds")) # TOCHANGE, not sure where this comes from (scan stats)
+#cluster_list <- readRDS(file.path(outputDir, "cart19_clusters.rds")) #TODO, not sure where this comes from (scan stats)
 
-gene_stats <- read.csv( # TOCHANGE, not sure where this comes from
+gene_stats <- read.csv( # TODO, not sure where this comes from
     file.path(outputDir, "cart19_gene_stats.csv")) %>%
   dplyr::mutate(gene_name = alias_arbiter(
     IDs = gene_name,
@@ -306,7 +306,7 @@ gene_stats <- read.csv( # TOCHANGE, not sure where this comes from
     aliasIDs = hgnc_complete$extended_alias,
     sep = "|", remove_absent_IDs = NULL, quiet = TRUE))
 
-gene_impact <- readRDS( # TOCHANGE, not sure where this comes from
+gene_impact <- readRDS( # TODO, not sure where this comes from
     file.path(outputDir, "cart19_gene_impact.rds")) %>%
   dplyr::select(
     -ort_fisher_test, -ort_fisher_test_CR, -ort_fisher_test_NR
@@ -1095,7 +1095,7 @@ In this report, we mined the data collected from integration site sequencing for
 
 A point to keep in mind through all this analysis is that integration sites are sampled from a larger population. It would be rare for all integration sites in a sample to be represented in the sequence data.
 
-```{r summary_tbl1, child = file.path("/home/ubuntu/data/CART19/CART19_from_git/scripts", "goi_child_templates", "summary_tbl1.rmd"), eval = nrow(df5) > 0,envir=environment()}
+```{r summary_tbl1, child = file.path("/home/ubuntu/data/CART19/CART19_from_git2/scripts", "goi_child_templates", "summary_tbl1.rmd"), eval = nrow(df5) > 0,envir=environment()}
 ```
 
 
