@@ -134,8 +134,8 @@ cat("[", paste(Sys.time()), "] Running 'uniq_process_and_annotate.R'... (Process
 suppressMessages(source(file = file.path(scriptDir, "uniq_process_and_annotate.R")))
 
 # Process scan statistics on unique sites ----
-cat("[", paste(Sys.time()), "] Running 'process_scan_statistics.R'... (Processing step 3 of 7)\n")
-suppressMessages(source(file = file.path(scriptDir, "process_scan_statistics.R")))
+# cat("[", paste(Sys.time()), "] Running 'process_scan_statistics.R'... (Processing step 3 of 7)\n")
+# suppressMessages(source(file = file.path(scriptDir, "process_scan_statistics.R")))
 
 # Summarize unique integration sites across patient, timepoint, ... ----
 cat("[", paste(Sys.time()), "] Running 'summarize_intsites.R'... (Processing step 4 of 7)\n")
@@ -150,7 +150,7 @@ cat("[", paste(Sys.time()), "] Running 'genic_impact.R'... (Processing step 6 of
 suppressMessages(source(file = file.path(scriptDir, "genic_impact.R")))
 
 # Determine the intergenic impact (only non-gene sites) ----
-cat("[", paste(Sys.time()), "] Running 'intergenic_impact.R'... (Processing step 7 of 7)\n")
-suppressMessages(source(file = file.path(scriptDir, "intergenic_impact.R")))
+# cat("[", paste(Sys.time()), "] Running 'intergenic_impact.R'... (Processing step 7 of 7)\n")
+# suppressMessages(source(file = file.path(scriptDir, "intergenic_impact.R")))
 
 
