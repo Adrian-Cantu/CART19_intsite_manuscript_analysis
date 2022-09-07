@@ -400,6 +400,8 @@ cart19_clusters <- unlist(GRangesList(lapply(
   }
 )))
 
+saveRDS(cart19_clusters,file = 'ALL_cart19_clusters')
+
 red_clusters <- GenomicRanges::reduce(cart19_clusters, with.revmap = TRUE)
 
 red_clusters$cluster_origin <- sapply(red_clusters$revmap, function(x){

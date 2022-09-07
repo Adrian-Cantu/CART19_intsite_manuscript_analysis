@@ -52,7 +52,7 @@ if(
       loci = get_loci_id(mod_refGenes[queryHits(tdn_in_gene)]),
       gene_name = as.character(mod_refGenes$name[queryHits(tdn_in_gene)]),
       gene_ort = as.character(strand(mod_refGenes[queryHits(tdn_in_gene)])),
-      strand = as.character(strand)) %>%
+      strand = as.character(strand)) #%>%
     dplyr::select(
       loci, gene_name, gene_ort, posid, strand, estAbund, relAbund, patient) %>%
     dplyr::group_by(loci, gene_name, gene_ort) %>%

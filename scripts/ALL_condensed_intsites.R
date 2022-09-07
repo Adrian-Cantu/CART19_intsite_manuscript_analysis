@@ -9,6 +9,15 @@ samples <- dbGetQuery(dbConn,arr)
 
 numCores <- 4
 
+#import response data
+
+library(readxl)
+CARTSite_Response <- read_excel("CARTSite.Response.BOR.01142022.xlsx", 
+                                col_types = c("text", "numeric", "skip", 
+                                              "date", "skip", "skip", "skip", "date", 
+                                              "numeric", "text", "numeric", "text"))
+# BOR= best overal response
+colnames(CARTSite_Response) <- c('Trial','ID','inf_date','response_date','response_timepoint','BOR','BORc','note')
 
 if( !file.exists('ALL_intSites.rds') ) {
   intSites <- getDBgenomicFragments(samples$SpecimenAccNum, 'specimen_management', 'intsites_miseq') %>% 
@@ -26,8 +35,34 @@ if( !file.exists('ALL_intSites.rds') ) {
 paste0('chr',c(1:22,'X','Y'))
 condensed_intsites <- readRDS("~/data/CART19/CART19_from_git2/data/condensed_intsites.rds") %>%
   as.data.frame(row.names = NULL)
-new_condensed <- intSites %>% 
-  as.data.frame() %>% 
+
+# match GTSP, PID and BOR
+samples_all <- dbGetQuery(dbConn,'select * from gtsp')%>%
+  filter(SpecimenAccNum %in% intSites$GTSP)
+
+gtsp_to_pid <- samples_all %>% select(c("SpecimenAccNum","SamplePatientCode","Patient","Trial")) %>%
+  mutate(SamplePatientCode = str_replace(SamplePatientCode,'^CHP','CHOP')) %>%
+  separate(SamplePatientCode,c('Trial2',NA),'(?<=^(CHOP|UPCC))(?=\\d*(_|\\-))') %>%
+  mutate(Trial2=ifelse(Trial2=='xxx','CHOP',Trial2)) %>%
+  mutate(Patient=str_replace(Patient,'^\\D+','')) %>%
+  mutate(Patient=str_replace(Patient,'\\-?[^0-9\\-].*','')) %>%
+  mutate(PID=paste0(Trial2,Patient)) %>%
+  mutate(GTSP=SpecimenAccNum) %>%
+  select(c(GTSP,PID,Trial))
+
+pid_to_bor <- CARTSite_Response %>%
+  group_by(Trial,ID) %>%
+  summarise(BORc=max(BORc), .groups = 'drop') %>%
+  mutate(PID=paste0(Trial,'-',sprintf("%02d", ID))) %>%
+  select(c(PID,BORc))
+
+gtsp_to_bor <- left_join(gtsp_to_pid,pid_to_bor,by='PID') 
+
+# ttt <- left_join(intSites %>% as.data.frame(),gtsp_to_bor,by='GTSP')
+
+
+
+new_condensed <- left_join(intSites %>% as.data.frame(),gtsp_to_bor,by='GTSP') %>% 
   filter(seqnames %in% paste0('chr',c(1:22,'X','Y'))) %>% 
   dplyr::rename("specimen"=GTSP,
                 'refgenome'=refGenome,
@@ -49,7 +84,9 @@ new_condensed <- new_condensed %>%
   mutate(gene_id=gene_id_wo_annot) %>% 
   mutate(gene_id=ifelse(in_gene=='FALSE',gene_id,paste0(gene_id,'*'))) %>% 
   mutate(gene_id=ifelse(abs(nearestOncoFeatureDist)<50000,paste0(gene_id,'~'),gene_id)) %>% 
-  mutate(gene_id=ifelse(abs(nearestlymphomaFeatureDist)<50000,paste0(gene_id,'!'),gene_id))
+  mutate(gene_id=ifelse(abs(nearestlymphomaFeatureDist)<50000,paste0(gene_id,'!'),gene_id)) %>% 
+  mutate(patient =PID ) %>% 
+  mutate(PID= NULL)
 
 setdiff(colnames(condensed_intsites),colnames(new_condensed)) ## TODO migth still need to add relRank
 head(condensed_intsites)
