@@ -273,6 +273,60 @@ gene_stats <- data.frame(
     "Top_10pc_Abund" = gene_name %in% top_ten_pc_sonicAbund)
 
 
+gene_stats[is.na(gene_stats)] <- 0
+total_tdn_sites <- length(unique(paste(tdn_gr$patient, tdn_gr$posid)))
+total_tdn_sites_CR <- length(unique(paste(
+  tdn_gr$patient, tdn_gr$posid)[tdn_gr$patient %in% CR_pats]))
+total_tdn_sites_NR <- length(unique(paste(
+  tdn_gr$patient, tdn_gr$posid)[tdn_gr$patient %in% NR_pats]))
+total_pat_sites <- length(unique(paste(tp_gr$patient, tp_gr$posid)))
+total_pat_sites_CR <- length(unique(paste(
+  tp_gr$patient, tp_gr$posid)[tp_gr$patient %in% CR_pats]))
+total_pat_sites_NR <- length(unique(paste(
+  tp_gr$patient, tp_gr$posid)[tp_gr$patient %in% NR_pats]))
+
+gene_stats <- dplyr::filter(
+  gene_stats, TDN_num_patients > 0 | TP_num_patients > 0
+) %>%
+  dplyr::group_by(loci, gene_name, gene_ort) %>%
+  dplyr::mutate(
+    "ort_fisher_test" = fisher.test(matrix(
+      c(tdn_same, tdn_oppo, tp_same, tp_oppo), 
+      nrow = 2, ncol = 2))$p.value,
+    "ort_fisher_test_CR" = fisher.test(matrix(
+      c(tdn_same_CR, tdn_oppo_CR, tp_same_CR, tp_oppo_CR), 
+      nrow = 2, ncol = 2))$p.value,
+    "ort_fisher_test_NR" = fisher.test(matrix(
+      c(tdn_same_NR, tdn_oppo_NR, tp_same_NR, tp_oppo_NR), 
+      nrow = 2, ncol = 2))$p.value) %>% 
+  dplyr::ungroup() %>%
+  dplyr::select(
+    loci, gene_name, gene_ort, gene_width, TDN_num_patients, TDN_num_pats_CR, 
+    TDN_num_pats_NR, TP_num_patients, TP_num_pats_CR, TP_num_pats_NR,
+    TDN_num_sites, TDN_num_sites_CR, TDN_num_sites_NR, TP_num_sites, 
+    TP_num_sites_CR, TP_num_sites_NR, TDN_peak_abund, TDN_peak_abund_CR, 
+    TDN_peak_abund_NR, TP_peak_abund, TP_peak_abund_CR, TP_peak_abund_NR,
+    TDN_peak_relAbund, TP_peak_relAbund, TDN_sum_abund, TDN_sum_abund_CR, 
+    TDN_sum_abund_NR, TP_sum_abund, TP_sum_abund_CR, TP_sum_abund_NR, 
+    long_count, max_time, max_span, abund_gini, ort_fisher_test, 
+    ort_fisher_test_CR, ort_fisher_test_NR, On_Onco_List, Top_1pc_Abund, 
+    Top_10pc_Abund, Within_Cluster, Cluster_target.min) %>%
+  dplyr::mutate(
+    TDN_freq = TDN_num_sites / (gene_width * total_tdn_sites),
+    TDN_freq_CR = TDN_num_sites_CR / (gene_width * total_tdn_sites_CR),
+    TDN_freq_NR = TDN_num_sites_NR / (gene_width * total_tdn_sites_NR),
+    TP_freq = TP_num_sites/(gene_width * total_pat_sites),
+    TP_freq_CR = TP_num_sites_CR/(gene_width * total_pat_sites_CR),
+    TP_freq_NR = TP_num_sites_NR/(gene_width * total_pat_sites_NR),
+    freq_diff = (TP_freq - TDN_freq),
+    freq_diff_CR = (TP_freq_CR - TDN_freq_CR),
+    freq_diff_NR = (TP_freq_NR - TDN_freq_NR),
+    pct_chg = 100 * freq_diff / TDN_freq,
+    pct_chg_CR = 100 * freq_diff_CR / TDN_freq_CR,
+    pct_chg_NR = 100 * freq_diff_NR / TDN_freq_NR) %>%
+  as.data.frame()
+
+
 
 saveRDS(
   gene_stats,
