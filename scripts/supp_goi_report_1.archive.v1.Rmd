@@ -51,7 +51,7 @@ if(!exists('scriptDir')) {scriptDir <- "/home/ubuntu/data/CART19/CART19_from_git
 if(!exists('utilsDir')) {utilsDir <- "/home/ubuntu/data/CART19/CART19_from_git2/utils"}
 if(!exists('outputDir')) {outputDir <- "/home/ubuntu/data/CART19/CART19_from_git2/data"}
 if(!exists('numCores')) {numCores <- parallel::detectCores()}
-if(!exists('opts_knit$get("output.dir")')){ opts_knit$set(output.dir = '../reports') }
+if(!exists('opts_knit$get("output.dir")')){ opts_knit$set(output.dir = '../ALL_reports') }
 options(bitmapType='cairo')
 knitr::opts_chunk$set(
   echo = FALSE,
