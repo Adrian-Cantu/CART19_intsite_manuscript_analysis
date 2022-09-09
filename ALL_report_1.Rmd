@@ -34,7 +34,7 @@ packs <- c(
   "data.table", "intergraph", "network", "sna", "ggnet", "dnet", "GO.db", 
   "parallel", "ggrepel", "scales", "grid", "gridExtra", "RColorBrewer", 
   "reshape2", "knitr", "kableExtra", "UpSetR", "BiasedUrn", "foreach",
-  "KEGGREST", "magrittr", "tidyverse"
+  "KEGGREST", "magrittr", "tidyverse","gt34"
 )
 
 packsLoaded <- suppressMessages(
@@ -71,6 +71,12 @@ knitr::opts_chunk$set(
   fig.width = 7,
   dev.args = list(type = "cairo-png")
 )
+
+if (is.null(opts_knit$get("rmarkdown.pandoc.to"))) {
+  doc_format <- 'live'
+} else {
+  doc_format <-  opts_knit$get("rmarkdown.pandoc.to")
+}
 
 ```
 
@@ -319,6 +325,8 @@ gene_impact <- readRDS( # TODO, not sure where this comes from
 
 ```
 
+
+
 ```{r pp2}
 # Import KEGG pathways ----
 k_list <- keggList("hsa")
@@ -339,8 +347,8 @@ k_pathList <- split(k_pathList, names(k_pathList))
 k_genes <- unique(unlist(k_pathList))
 
 k_path_df <- plyr::ldply( # a PATH/GENE dataframe
-  k_pathList, 
-  function(x){data.frame(gene_sym = x)}, 
+  k_pathList,
+  function(x){data.frame(gene_sym = x)},
   .id = "path"
 )
 
@@ -362,11 +370,11 @@ Gobp <- induced_subgraph(
 # Pick up gene product annotations to GO terms (UniProt-GOA)
 goa_bpdata <- load_go_gaf(
     paste0("zcat ", file.path(utilsDir, "goa_human.gaf.gz"))
-  ) %>% 
+  ) %>%
   dplyr::mutate(gene_symbol = alias_arbiter(
-    IDs = DB_Object_Symbol, 
-    RefIDs = hgnc_complete$symbol, 
-    aliasIDs = hgnc_complete$extended_alias, 
+    IDs = DB_Object_Symbol,
+    RefIDs = hgnc_complete$symbol,
+    aliasIDs = hgnc_complete$extended_alias,
     sep = "|", remove_absent_IDs = NULL, quiet = TRUE)) %>%
   dplyr::filter(gene_symbol %in% gene_impact$gene_name) %>%
   dplyr::filter(GO_ID %in% V(Gobp)$name)
@@ -410,7 +418,7 @@ total_pat_sites <- as.data.frame(cond_uniq_sites, row.names = NULL) %>%
 # Analysis ----
 ## Integration site enrichment through frequency analysis ----
 df1 <- dplyr::filter(
-    gene_impact, 
+    gene_impact,
     TP_num_patients >= 2,
     TP_num_sites >= 10) %>%
   dplyr::arrange(desc(pct_chg)) %>%
@@ -418,7 +426,7 @@ df1 <- dplyr::filter(
   dplyr::group_by(id) %>%
   dplyr::mutate(freq_fisher_test = fisher.test(
     matrix(
-      c(TDN_num_sites, TP_num_sites, total_tdn_sites, total_pat_sites), 
+      c(TDN_num_sites, TP_num_sites, total_tdn_sites, total_pat_sites),
       ncol = 2))$p.value) %>%
   dplyr::ungroup() %>%
   dplyr::mutate(adj_freq_test = p.adjust(freq_fisher_test, method = "BH"))
@@ -431,18 +439,18 @@ df1.1 <- dplyr::filter(
   dplyr::mutate(id = seq_len(n()))
 
 df1.2 <- dplyr::select(
-    df1.1, gene_name, TP_num_patients, TDN_num_sites, TP_num_sites, 
+    df1.1, gene_name, TP_num_patients, TDN_num_sites, TP_num_sites,
     On_Onco_List, pct_chg
   ) %>%
   dplyr::arrange(desc(pct_chg)) %>%
   dplyr::rename(
-    "Gene" = gene_name, "Num. Patients" = TP_num_patients, 
-    "TDN Sites" = TDN_num_sites, "Patient Sites" = TP_num_sites, 
+    "Gene" = gene_name, "Num. Patients" = TP_num_patients,
+    "TDN Sites" = TDN_num_sites, "Patient Sites" = TP_num_sites,
     "Onco-Related" = On_Onco_List, "Frequency Increase (%)" = pct_chg) %>%
   as.data.frame()
 
 go1.1 <- fisher_hyper_GO_test(
-  df1.1$gene_name, all_GOBP_list, odds = FALSE, p_adjust = 'BH', 
+  df1.1$gene_name, all_GOBP_list, odds = FALSE, p_adjust = 'BH',
   lower_tail = FALSE, cores = numCores
 )
 
@@ -459,17 +467,17 @@ go1.1$grp.go <- membership(cluster_louvain(
 ))[go1.1$GO_ID]
 
 kegg1.1 <- fisher_hyper_KEGG_test(
-  df1.1$gene_name, k_pathList, odds = FALSE, p_adjust = 'BH', 
+  df1.1$gene_name, k_pathList, odds = FALSE, p_adjust = 'BH',
   lower_tail = FALSE, cores = numCores
 )
 
 kegg1.1 <- dplyr::filter(
-  kegg1.1, overlap_size >= min_KEGG_ovlp, 
+  kegg1.1, overlap_size >= min_KEGG_ovlp,
   KEGG_size <= max_KEGG_size, !is.na(KEGG_Term)
 )
 
 kegg1.1$grp <- cluster_by_list_similarity(
-  keys = kegg1.1$path_id, keyList = k_pathList, limitValues = df1.1$gene_name, 
+  keys = kegg1.1$path_id, keyList = k_pathList, limitValues = df1.1$gene_name,
   cores = numCores
 )
 
@@ -480,17 +488,17 @@ df1.3 <- dplyr::filter(
   dplyr::mutate(id = seq_len(n()))
 
 df1.4 <- dplyr::select(
-    df1.3, gene_name, TP_num_patients, TDN_num_sites, TP_num_sites, 
+    df1.3, gene_name, TP_num_patients, TDN_num_sites, TP_num_sites,
     On_Onco_List, pct_chg) %>%
   dplyr::arrange(pct_chg) %>%
   dplyr::rename(
-    "Gene" = gene_name, "Num. Patients" = TP_num_patients, 
-    "TDN Sites" = TDN_num_sites, "Patient Sites" = TP_num_sites, 
+    "Gene" = gene_name, "Num. Patients" = TP_num_patients,
+    "TDN Sites" = TDN_num_sites, "Patient Sites" = TP_num_sites,
     "Onco-Related" = On_Onco_List, "Frequency Increase (%)" = pct_chg) %>%
   as.data.frame()
 
 go1.2 <- fisher_hyper_GO_test(
-  df1.3$gene_name, all_GOBP_list, odds = FALSE, p_adjust = 'BH', 
+  df1.3$gene_name, all_GOBP_list, odds = FALSE, p_adjust = 'BH',
   lower_tail = FALSE, cores = numCores
 )
 
@@ -508,15 +516,15 @@ go1.2$grp.go <- membership(cluster_louvain(
 ))[go1.2$GO_ID]
 
 kegg1.2 <- fisher_hyper_KEGG_test(
-  df1.3$gene_name, k_pathList, odds = FALSE, p_adjust = 'BH', 
+  df1.3$gene_name, k_pathList, odds = FALSE, p_adjust = 'BH',
   lower_tail = FALSE, cores = numCores)
 
 kegg1.2 <- dplyr::filter(
-  kegg1.2, overlap_size >= min_KEGG_ovlp, 
+  kegg1.2, overlap_size >= min_KEGG_ovlp,
   KEGG_size <= max_KEGG_size, !is.na(KEGG_Term))
 
 kegg1.2$grp <- cluster_by_list_similarity(
-  keys = kegg1.2$path_id, keyList = k_pathList, limitValues = df1.3$gene_name, 
+  keys = kegg1.2$path_id, keyList = k_pathList, limitValues = df1.3$gene_name,
   cores = numCores)
 
 
@@ -537,12 +545,12 @@ df2.2 <- dplyr::select(
     df2.1, gene_name, TP_num_patients, TP_peak_abund, TP_peak_relAbund,
     abund_gini, On_Onco_List) %>%
   dplyr::rename(
-    "Gene" = gene_name, "Num. Patients" = TP_num_patients, 
-    "Peak Abundance" = TP_peak_abund, "Peak Rel. Abund." = TP_peak_relAbund, 
+    "Gene" = gene_name, "Num. Patients" = TP_num_patients,
+    "Peak Abundance" = TP_peak_abund, "Peak Rel. Abund." = TP_peak_relAbund,
     "Clonal Gini Index" = abund_gini, "Onco-Related" = On_Onco_List)
 
 go2.1 <- fisher_hyper_GO_test(
-  df2.1$gene_name, all_GOBP_list, odds = FALSE, p_adjust = 'BH', 
+  df2.1$gene_name, all_GOBP_list, odds = FALSE, p_adjust = 'BH',
   lower_tail = FALSE, cores = numCores
 )
 
@@ -560,17 +568,17 @@ go2.1$grp.go <- membership(cluster_louvain(
 ))[go2.1$GO_ID]
 
 kegg2.1 <- fisher_hyper_KEGG_test(
-  df2.1$gene_name, k_pathList, odds = FALSE, p_adjust = 'BH', 
+  df2.1$gene_name, k_pathList, odds = FALSE, p_adjust = 'BH',
   lower_tail = FALSE, cores = numCores
 )
 
 kegg2.1 <- dplyr::filter(
-  kegg2.1, overlap_size >= min_KEGG_ovlp, 
+  kegg2.1, overlap_size >= min_KEGG_ovlp,
   KEGG_size <= max_KEGG_size, !is.na(KEGG_Term)
 )
 
 kegg2.1$grp <- cluster_by_list_similarity(
-  keys = kegg2.1$path_id, keyList = k_pathList, limitValues = df2.1$gene_name, 
+  keys = kegg2.1$path_id, keyList = k_pathList, limitValues = df2.1$gene_name,
   cores = numCores
 )
 ```
@@ -581,7 +589,7 @@ kegg2.1$grp <- cluster_by_list_similarity(
 df3 <- gene_impact %>%
   dplyr::filter(
     TP_num_patients >= 2,
-    TP_num_sites >= 10, 
+    TP_num_sites >= 10,
     max_span > 1,
     max_time > 90
   )
@@ -590,25 +598,25 @@ df3.1 <- df3 %>%
   dplyr::select(
     gene_name, long_count, max_time, max_span, pct_chg, TP_peak_abund
   )
-  
+
 df3.2 <- df3 %>%
   dplyr::arrange(
     desc(max_span), desc(max_time), desc(long_count), desc(TP_num_sites),
     desc(TP_num_patients), On_Onco_List
   ) %>%
   dplyr::select(
-    gene_name, max_span, max_time, long_count, TP_num_patients, TP_num_sites, 
+    gene_name, max_span, max_time, long_count, TP_num_patients, TP_num_sites,
     TP_peak_abund, On_Onco_List
   ) %>%
   dplyr::rename(
-    "Gene" = gene_name, "Obs. Count" = long_count, "Time Span" = max_span, 
-    "Longest Time" = max_time, "Num. Patients" = TP_num_patients, 
+    "Gene" = gene_name, "Obs. Count" = long_count, "Time Span" = max_span,
+    "Longest Time" = max_time, "Num. Patients" = TP_num_patients,
     "Patient Sites" = TP_num_sites, "Peak Abund." = TP_peak_abund,
     "Onco-Related" = On_Onco_List
   )
 
 go3.2 <- fisher_hyper_GO_test(
-  df3.2$Gene, all_GOBP_list, odds = FALSE, p_adjust = 'BH', 
+  df3.2$Gene, all_GOBP_list, odds = FALSE, p_adjust = 'BH',
   lower_tail = FALSE, cores = numCores
 )
 
@@ -626,17 +634,17 @@ go3.2$grp.go <- membership(cluster_louvain(
 ))[go3.2$GO_ID]
 
 kegg3.2 <- fisher_hyper_KEGG_test(
-  df3.2$Gene, k_pathList, odds = FALSE, p_adjust = 'BH', 
+  df3.2$Gene, k_pathList, odds = FALSE, p_adjust = 'BH',
   lower_tail = FALSE, cores = numCores
 )
 
 kegg3.2 <- dplyr::filter(
-  kegg3.2, overlap_size >= min_KEGG_ovlp, 
+  kegg3.2, overlap_size >= min_KEGG_ovlp,
   KEGG_size <= max_KEGG_size, !is.na(KEGG_Term)
 )
 
 kegg3.2$grp <- cluster_by_list_similarity(
-  keys = kegg3.2$path_id, keyList = k_pathList, limitValues = df3.2$Gene, 
+  keys = kegg3.2$path_id, keyList = k_pathList, limitValues = df3.2$Gene,
   cores = numCores
 )
 ```
@@ -647,7 +655,7 @@ kegg3.2$grp <- cluster_by_list_similarity(
 potential_genes <- list(
   "Enrichment" = df1.2$Gene,
   "Depletion" = df1.4$Gene,
-  "Abundance" = df2.2$Gene, 
+  "Abundance" = df2.2$Gene,
   "Longitudinal" = df3.2$Gene,
   #"Clusters" = df4.1$Gene,
   "Composite" = unique(c(
@@ -684,13 +692,13 @@ df5 <- data.frame(
   #   length(which(unique(x) %in% k_path_df$gene_sym))
   # }),
   row.names = NULL
-) 
+)
 
 # Detailed table of all genes
 df6 <- dplyr::filter(
-    gene_impact, 
-    gene_name %in% potential_genes$Composite | 
-      gene_name %in% potential_genes$Depletion, 
+    gene_impact,
+    gene_name %in% potential_genes$Composite |
+      gene_name %in% potential_genes$Depletion,
     TP_num_patients > 0
   ) %>%
   dplyr::mutate(
@@ -704,18 +712,18 @@ df6 <- dplyr::filter(
   dplyr::group_by(loci, gene_name) %>%
   dplyr::mutate(
     crit_id = paste(
-      c("E", "D", "A", "L")[c(enr_freq, dep_freq, abund, long)], 
+      c("E", "D", "A", "L")[c(enr_freq, dep_freq, abund, long)],
       collapse = ""),
     count = sum(c(enr_freq, abund, long)),
     tcount = nchar(crit_id)
   ) %>%
   dplyr::ungroup() %>%
   dplyr::arrange(
-    desc(rowSums(matrix(c(enr_freq, abund, long), ncol = 3))), 
+    desc(rowSums(matrix(c(enr_freq, abund, long), ncol = 3))),
     desc(TP_num_patients))
 
 go6 <- fisher_hyper_GO_test(
-  potential_genes$Composite, all_GOBP_list, odds = FALSE, p_adjust = 'BH', 
+  potential_genes$Composite, all_GOBP_list, odds = FALSE, p_adjust = 'BH',
   lower_tail = FALSE, cores = numCores
 )
 
@@ -733,17 +741,17 @@ go6$grp.go <- membership(cluster_louvain(
 ))[go6$GO_ID]
 
 kegg6 <- fisher_hyper_KEGG_test(
-  potential_genes$Composite, k_pathList, odds = FALSE, p_adjust = 'BH', 
+  potential_genes$Composite, k_pathList, odds = FALSE, p_adjust = 'BH',
   lower_tail = FALSE, cores = numCores
 )
 
 kegg6 <- dplyr::filter(
-  kegg6, overlap_size >= min_KEGG_ovlp, 
+  kegg6, overlap_size >= min_KEGG_ovlp,
   KEGG_size <= max_KEGG_size, !is.na(KEGG_Term)
 )
 
 kegg6$grp <- cluster_by_list_similarity(
-  keys = kegg6$path_id, keyList = k_pathList, limitValues = df6$gene_name, 
+  keys = kegg6$path_id, keyList = k_pathList, limitValues = df6$gene_name,
   cores = numCores
 )
 
@@ -754,8 +762,8 @@ df6.1 <- dplyr::filter(df6, count >= 3) %>%
     gene_name, TP_num_patients, pct_chg, TP_peak_abund, max_time, crit_id
   ) %>%
   dplyr::rename(
-    "Gene" = gene_name, "Patients" = TP_num_patients, 
-    "Freq. Change (%)" = pct_chg, "Peak Abund." = TP_peak_abund, 
+    "Gene" = gene_name, "Patients" = TP_num_patients,
+    "Freq. Change (%)" = pct_chg, "Peak Abund." = TP_peak_abund,
     "Long. Obs." = max_time, "Criteria" = crit_id) %>%
   as.data.frame()
 
@@ -788,15 +796,15 @@ go_criteria_list_df <- bind_rows(list(
 go_term_data <- go6 %>%
   dplyr::group_by(grp) %>%
   dplyr::arrange(desc(overlap_size), desc(GO_size)) %>%
-  dplyr::slice(seq_len(slice_cnt)) %>%  
+  dplyr::slice(seq_len(slice_cnt)) %>%
   dplyr::ungroup() %>%
   dplyr::arrange(grp, desc(overlap_size)) %>%
   dplyr::select(grp, GO_ID, GO_Term, GO_size, overlap_size)
 
 go_term_matrix <- sapply(potential_genes, function(x){
-  sapply(go_term_data$GO_ID, function(y){ 
-    sum(x %in% all_GOBP_list[[y]]) / 
-      sum(gene_impact$gene_name %in% all_GOBP_list[[y]]) })}) 
+  sapply(go_term_data$GO_ID, function(y){
+    sum(x %in% all_GOBP_list[[y]]) /
+      sum(gene_impact$gene_name %in% all_GOBP_list[[y]]) })})
 
 go_heatmap_data <- as.data.frame(go_term_matrix) %>%
   dplyr::mutate(
@@ -817,7 +825,7 @@ go_heatmap_data <- as.data.frame(go_term_matrix) %>%
 
 ### KEGG ----
 if( nrow(kegg6) > lines_per_page){
-  slice_cnt <- pick_slice_cnt(kegg6$grp, lines_per_page) 
+  slice_cnt <- pick_slice_cnt(kegg6$grp, lines_per_page)
 }else{
   slice_cnt <- 1
 }
@@ -845,9 +853,9 @@ kegg_term_data <- kegg6 %>%
   dplyr::select(grp, path_id, KEGG_Term, KEGG_size, overlap_size)
 
 kegg_term_matrix <- sapply(potential_genes, function(x){
-  sapply(kegg_term_data$path_id, function(y){ 
-    sum(x %in% k_pathList[[y]]) / 
-      sum(gene_impact$gene_name %in% k_pathList[[y]]) 
+  sapply(kegg_term_data$path_id, function(y){
+    sum(x %in% k_pathList[[y]]) /
+      sum(gene_impact$gene_name %in% k_pathList[[y]])
   })
 })
 
@@ -862,7 +870,7 @@ kegg_heatmap_data <- as.data.frame(kegg_term_matrix) %>%
     f_kegg_term = factor(f_kegg_term, levels = f_kegg_term)
   ) %>%
   tidyr::gather(
-    key = "Criteria", value = "Proportion", 
+    key = "Criteria", value = "Proportion",
     -path_id, -KEGG_Term, -f_kegg_term
   ) %>%
   left_join(kegg_criteria_list_df, by = c("path_id", "Criteria")) %>%
@@ -877,14 +885,14 @@ kegg_heatmap_data <- as.data.frame(kegg_term_matrix) %>%
 # Generate Random Integration sites for comparison ----
 random_sites <- selectRandomSites(
   num = sum(gene_impact$TDN_num_sites, gene_impact$TP_num_sites),
-  refGenome = refGenome, 
+  refGenome = refGenome,
   setSeed = 714
 )
 
 random_sites <- hiAnnotator::getSitesInFeature(
-  random_sites, 
-  ref_genes, 
-  colnam = "in_gene", 
+  random_sites,
+  ref_genes,
+  colnam = "in_gene",
   feature.colnam = "name2"
 )
 
@@ -955,8 +963,8 @@ output_impact <- dplyr::select(
     -TDN_num_pats_NR, -TP_num_pats_CR, -TP_num_pats_NR, -TDN_num_sites_CR,
     -TDN_num_sites_NR, -TP_num_sites_CR, -TP_num_sites_NR, -TDN_peak_abund_CR,
     -TDN_peak_abund_NR, -TP_peak_abund_CR, -TP_peak_abund_NR, -TDN_sum_abund_CR,
-    -TDN_sum_abund_NR, -TP_sum_abund_CR, -TP_sum_abund_NR, -max_span, 
-    -TDN_freq_CR, -TDN_freq_NR, -TP_freq_CR, -TP_freq_NR, -freq_diff_CR, 
+    -TDN_sum_abund_NR, -TP_sum_abund_CR, -TP_sum_abund_NR, -max_span,
+    -TDN_freq_CR, -TDN_freq_NR, -TP_freq_CR, -TP_freq_NR, -freq_diff_CR,
     -freq_diff_NR, -pct_chg_CR, -pct_chg_NR, -Top_1pc_Abund, -Top_10pc_Abund
   ) %>%
   dplyr::mutate(
@@ -966,19 +974,19 @@ output_impact <- dplyr::select(
     abund_gini = round(abund_gini, digits = 3),
     pct_chg = round(pct_chg, digits = 1)) %>%
   dplyr::rename(
-    "Genomic_Loci" = loci, "Gene_Name" = gene_name, 
-    "Gene_Orientation" = gene_ort, "Gene_Width_(kb)" = gene_width, 
-    "Obs_TDN_Products" = TDN_num_patients, "Obs_Patients" = TP_num_patients, 
-    "Num_Sites_TDN" = TDN_num_sites, "Num_Sites_Patients" = TP_num_sites, 
-    "Peak_Abund_TDN" = TDN_peak_abund, "Peak_Abund_Patients" = TP_peak_abund, 
-    "Peak_RelAbund_TDN" = TDN_peak_relAbund, 
-    "Peak_RelAbund_Patients" = TP_peak_relAbund, 
-    "Longitudinal_Count" = long_count, "Last_Timepoint" = max_time, 
-    "Abund_Gini" = abund_gini, "Freq_TDN_Sites" = TDN_freq, 
-    "Freq_Patient_Sites" = TP_freq, "Freq_Difference" = freq_diff, 
-    "Percent_Freq_Change" = pct_chg, "Enrichment" = enr_freq, 
+    "Genomic_Loci" = loci, "Gene_Name" = gene_name,
+    "Gene_Orientation" = gene_ort, "Gene_Width_(kb)" = gene_width,
+    "Obs_TDN_Products" = TDN_num_patients, "Obs_Patients" = TP_num_patients,
+    "Num_Sites_TDN" = TDN_num_sites, "Num_Sites_Patients" = TP_num_sites,
+    "Peak_Abund_TDN" = TDN_peak_abund, "Peak_Abund_Patients" = TP_peak_abund,
+    "Peak_RelAbund_TDN" = TDN_peak_relAbund,
+    "Peak_RelAbund_Patients" = TP_peak_relAbund,
+    "Longitudinal_Count" = long_count, "Last_Timepoint" = max_time,
+    "Abund_Gini" = abund_gini, "Freq_TDN_Sites" = TDN_freq,
+    "Freq_Patient_Sites" = TP_freq, "Freq_Difference" = freq_diff,
+    "Percent_Freq_Change" = pct_chg, "Enrichment" = enr_freq,
     "Depletion" = dep_freq, "Abundance" = abund, "Longitudinal" = long,
-    #"Cluster" = clust, 
+    #"Cluster" = clust,
     "Criteria" = crit_id
   ) %>%
   as.data.frame()
@@ -988,9 +996,9 @@ unlink(list.files(
 ))
 
 write.csv(
-  output_impact, 
-  file = file.path(paste0(gsub("-", "", Sys.Date()), "_cart19_goi_data.csv")), 
-  quote = TRUE, 
+  output_impact,
+  file = file.path(paste0(gsub("-", "", Sys.Date()), "_cart19_goi_data.csv")),
+  quote = TRUE,
   row.names = FALSE
 )
 
@@ -1005,7 +1013,7 @@ tbl2cap <- "The most consistently observed genes from filtering by various crite
 \newpage
 # Summary
 
-Lentiviral vectors integrate into genomes of targeted host cells (Tcells). These genomic locations of vector integrations are identifiable through integration site sequencing. Abundances of individual cell clones can be inferred by the sonicLength method ([**Berry *et al.* 2012**](https://www.ncbi.nlm.nih.gov/pubmed/22238265)).  
+Lentiviral vectors integrate into genomes of targeted host cells (Tcells). These genomic locations of vector integrations are identifiable through integration site sequencing. Abundances of individual cell clones can be inferred by the sonicLength method ([**Berry *et al.* 2012**](https://www.ncbi.nlm.nih.gov/pubmed/22238265)).
 
 In this report, we mined the data collected from integration site sequencing for `r length(unique(cond_uniq_sites$patient))` CART treated subjects. We constructed 4 gene lists based on: 1 & 2) increased / decreased integration site occurrence in patient samples relative to the initial transduction product, 3) peak clonal abundance, and 4) longitudinal clonal persistence. More about each of these criteria is below:
 
@@ -1016,6 +1024,23 @@ In this report, we mined the data collected from integration site sequencing for
 * **Longitudinal Observation** of clones is the quantification of observed timespans and last observed timepoints. The maximum value for clones within a gene were considered for characterization of the gene in this analysis. Genes were only considered if there were 10 or more integration sites isolated from at least two different patient samples. Genes were also not considered if they only consited of clones which were observed once or the last observed timepoint was less than 90 days from initial infusion.
 
 A point to keep in mind through all this analysis is that integration sites are sampled from a larger population. It would be rare for all integration sites in a sample to be represented in the sequence data.
+
+```{r}
+saveRDS(df5,file = file.path('ALL_reports','df5.rds'))
+saveRDS(df6,file = file.path('ALL_reports','df6.rds'))
+saveRDS(gene_list_pct,file = file.path('ALL_reports','gene_list_pct.rds'))
+saveRDS(df6.1,file = file.path('ALL_reports','df6.1.rds'))
+saveRDS(go6,file = file.path('ALL_reports','go6.rds'))
+saveRDS(kegg6,file = file.path('ALL_reports','kegg6.rds'))
+saveRDS(df1.2,file = file.path('ALL_reports','df1.2.rds'))
+saveRDS(df1.4,file = file.path('ALL_reports','df1.4.rds'))
+saveRDS(df2.2,file = file.path('ALL_reports','df2.2.rds'))
+saveRDS(df3.2,file = file.path('ALL_reports','df3.2.rds'))
+saveRDS(onco_genes,file = file.path('ALL_reports','onco_genes.rds'))
+
+
+```
+
 
 ```{r summary_tbl1, child = file.path("/home/ubuntu/data/CART19/CART19_from_git2/scripts", "goi_child_templates", "summary_tbl1.rmd"), eval = nrow(df5) > 0,envir=environment()}
 ```
@@ -1051,11 +1076,38 @@ A point to keep in mind through all this analysis is that integration sites are 
 ```
 
 \newpage
+# Samples
+```{r}
+dd <- cond_uniq_sites %>% 
+  as.data.frame() %>% 
+  dplyr::rename('cellType'=celltype) %>% 
+  dplyr::rename('GTSP'=specimen) %>% 
+  dplyr::rename('timePoint'=timepoint) 
+  if (doc_format=='live') {
+    dd %>%
+      dplyr::mutate(cellType = cellTypeControlVoc2(.data$cellType)) %>% 
+      get_pop_metrics_gtsp() %>%
+      dplyr::arrange(.data$patient,.data$timePointDays, .data$cellType)
+  } else if (doc_format=='latex') {
+    ppf_table(dd)
+  } else if (doc_format=='html'){
+    dd %>%
+      dplyr::mutate(cellType = cellTypeControlVoc2(.data$cellType)) %>% 
+      get_pop_metrics_gtsp() %>%
+      dplyr::arrange(.data$patient,.data$timePointDays, .data$cellType) %>% 
+      kable( "html") %>%
+      kable_paper("hover", full_width = F)
+  } 
+```
+
+
+
+\newpage
 # Reference Data
 
-The NCBI RefGenes data set was used to identify gene regions (hg38) while genes identified as onco-related were from the Bushman Lab curated list of [**onco-related genes**.](http://bushmanlab.org/links/genelists) 
+The NCBI RefGenes data set was used to identify gene regions (hg38) while genes identified as onco-related were from the Bushman Lab curated list of [**onco-related genes**.](http://bushmanlab.org/links/genelists)
 
-Gene Ontologies were extracted from the `GO.db` R-package (v3.4.1). KEGG pathways were acquired via interfacing with the KEGG web-server API through the `KEGGREST` R-package (v1.16.1). Gene lists, including RefSeq genes used for annotation of integration sites, were standardized to HGNC gene symbols (date: 2018-02-07). Groups identified in GO and KEGG analyses were determined from Jaccard distances between identified terms, followed by modularity-optimizing clustering from a weighted-undirected graph using a Louvain algorithm ([**Blondel *et al.* 2008**](doi:10.1088/1742-5468/2008/10/P10008)). Terms within groups of GO or KEGG terms have greater overlap of gene lists between themselves that between terms found in other groups. This method was implemented to help reduce the functional redundancy commonly observed in GO and overlapping pathways observed with KEGG.
+Gene Ontologies were extracted from the `GO.db` R-package (v3.14). KEGG pathways were acquired via interfacing with the KEGG web-server API through the `KEGGREST` R-package (v1.34.1). Gene lists, including RefSeq genes used for annotation of integration sites, were standardized to HGNC gene symbols (date: 2018-02-07). Groups identified in GO and KEGG analyses were determined from Jaccard distances between identified terms, followed by modularity-optimizing clustering from a weighted-undirected graph using a Louvain algorithm ([**Blondel *et al.* 2008**](doi:10.1088/1742-5468/2008/10/P10008)). Terms within groups of GO or KEGG terms have greater overlap of gene lists between themselves that between terms found in other groups. This method was implemented to help reduce the functional redundancy commonly observed in GO and overlapping pathways observed with KEGG.
 
 <!-- ```{r comp_tbl, child = file.path(scriptDir, "goi_child_templates", "comprehensive_tbl.rmd"), eval = nrow(df6) > 0} -->
 <!-- ``` -->
@@ -1074,23 +1126,23 @@ df6 %>%
     pct_chg = sprintf("%.01f", pct_chg)
   ) %>%
   dplyr::select(
-    gene_name, seqnames, start, end, TP_num_patients, pct_chg, TP_peak_abund, 
+    gene_name, seqnames, start, end, TP_num_patients, pct_chg, TP_peak_abund,
     max_span, crit_id
   ) %>%
   dplyr::rename(
-    "Gene" = gene_name, 
+    "Gene" = gene_name,
     "Chromosome" = seqnames,
     "Start Pos." = start,
-    "End Pos." = end, 
-    "Patients" = TP_num_patients, 
-    "Freq. Change (%)" = pct_chg, 
-    "Peak Abund." = TP_peak_abund, 
-    "Long. Obs." = max_span, 
+    "End Pos." = end,
+    "Patients" = TP_num_patients,
+    "Freq. Change (%)" = pct_chg,
+    "Peak Abund." = TP_peak_abund,
+    "Long. Obs." = max_span,
     "Criteria" = crit_id
   ) %>%
   kable(
     format = "latex", booktabs = TRUE, longtable = TRUE,
-    caption = "Table of all genes identified within analysis.", 
+    caption = "Table of all genes identified within analysis.",
     align = "c"
   ) %>%
   kable_styling(
@@ -1100,3 +1152,5 @@ df6 %>%
   landscape()
 
 ```
+
+
