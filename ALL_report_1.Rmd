@@ -445,7 +445,7 @@ df1.2 <- dplyr::select(
   dplyr::arrange(desc(pct_chg)) %>%
   dplyr::rename(
     "Gene" = gene_name, "Num. Patients" = TP_num_patients,
-    "TDN Sites" = TDN_num_sites, "Patient Sites" = TP_num_sites,
+    "Time 0 Sites" = TDN_num_sites, "Patient Sites" = TP_num_sites,
     "Onco-Related" = On_Onco_List, "Frequency Increase (%)" = pct_chg) %>%
   as.data.frame()
 
@@ -493,7 +493,7 @@ df1.4 <- dplyr::select(
   dplyr::arrange(pct_chg) %>%
   dplyr::rename(
     "Gene" = gene_name, "Num. Patients" = TP_num_patients,
-    "TDN Sites" = TDN_num_sites, "Patient Sites" = TP_num_sites,
+    "Time 0 sites" = TDN_num_sites, "Patient Sites" = TP_num_sites,
     "Onco-Related" = On_Onco_List, "Frequency Increase (%)" = pct_chg) %>%
   as.data.frame()
 
@@ -609,7 +609,7 @@ df3.2 <- df3 %>%
     TP_peak_abund, On_Onco_List
   ) %>%
   dplyr::rename(
-    "Gene" = gene_name, "Obs. Count" = long_count, "Time Span" = max_span,
+    "Gene" = gene_name, "unique Obs." = long_count, "Time Span" = max_span,
     "Longest Time" = max_time, "Num. Patients" = TP_num_patients,
     "Patient Sites" = TP_num_sites, "Peak Abund." = TP_peak_abund,
     "Onco-Related" = On_Onco_List

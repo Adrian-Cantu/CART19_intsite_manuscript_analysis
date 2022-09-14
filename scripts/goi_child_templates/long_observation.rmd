@@ -6,7 +6,7 @@ kable(
     head(df3.2, n = 50), format = "latex", booktabs = TRUE, 
     caption = paste(
       "Table of top", nrow(head(df3.2, n = 50)), 
-      "genes identified by longitudinal observations."), 
+      "genes identified by longitudinal observations of patients samples."), 
     align = "c"
   ) %>%
   kableExtra::kable_styling(
