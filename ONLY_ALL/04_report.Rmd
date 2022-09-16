@@ -1,7 +1,7 @@
 ---
 title: |
     | Genes of interest marked by vector integration
-    | All Patients (CLL & ALL) and 
+    | All ALL Patients and 
     | Response Groups (CR/PRtd & PR/NR & NA)
 author: "Adrian Cantu (Adapted from Christopher Nobles)"
 date: "`r format(Sys.time(), '%Y %B %d')`"
