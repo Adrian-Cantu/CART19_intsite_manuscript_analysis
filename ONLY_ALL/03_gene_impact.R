@@ -63,6 +63,7 @@ tp_in_gene <- findOverlaps(
   mod_refGenes, tp_gr, maxgap = 5000, ignore.strand = TRUE)
 
 
+
 # Assemble stats for each transcriptional unit -------------------------------
 ## From all patients
 
@@ -178,6 +179,64 @@ stats_tp <- as.data.frame(
     "tp_oppo_CR" = sum(as.integer(strand != gene_ort)[patient %in% CR_pats]),
     "tp_oppo_NR" = sum(as.integer(strand != gene_ort)[patient %in% NR_pats]))
 
+################ add section to get features for all times
+
+tp_tdn_gr <- format_sites(cond_uniq_sites)
+tp_tdn_in_gene <- findOverlaps(
+  mod_refGenes, tp_tdn_gr, maxgap = 5000, ignore.strand = TRUE)
+
+stats_tp_tdn <- as.data.frame(
+  tp_tdn_gr[subjectHits(tp_tdn_in_gene)], row.names = NULL) %>%
+  dplyr::mutate(
+    loci = get_loci_id(mod_refGenes[queryHits(tp_tdn_in_gene)]),
+    gene_name = as.character(mod_refGenes$name[queryHits(tp_tdn_in_gene)]),
+    gene_ort = as.character(strand(mod_refGenes[queryHits(tp_tdn_in_gene)])),
+    strand = as.character(strand),
+    timepoint = convert_time(as.character(timepoint))) %>%
+  dplyr::select(
+    loci, gene_name, gene_ort, posid, strand, 
+    estAbund, relAbund, patient, timepoint) %>%
+  dplyr::group_by(loci, gene_name, gene_ort, patient, posid, strand) %>%
+  dplyr::summarise(
+    "TP_TDN_long_count" = n_distinct(timepoint),
+    "TP_TDN_first_time" = min(timepoint),
+    "TP_TDN_last_time" = max(timepoint),
+    "TP_TDN_sum_abund" = sum(estAbund),
+    "TP_TDN_peak_abund" = max(estAbund),
+    "TP_TDN_peak_relAbund" = max(relAbund)) %>%
+  dplyr::ungroup() %>% 
+  dplyr::group_by(loci, gene_name, gene_ort) %>%
+  dplyr::summarise(
+    "TP_TDN_num_patients" = n_distinct(patient),
+    "TP_TDN_num_pats_CR" = n_distinct(patient[patient %in% CR_pats]),
+    "TP_TDN_num_pats_NR" = n_distinct(patient[patient %in% NR_pats]),
+    "TP_TDN_long_count" = max(TP_TDN_long_count),
+    "TP_TDN_max_time" = max(TP_TDN_last_time),
+    "TP_TDN_max_span" = max(TP_TDN_last_time - TP_TDN_first_time),
+    "TP_TDN_num_sites" = n_distinct(posid),
+    "TP_TDN_num_sites_CR" = n_distinct(posid[patient %in% CR_pats]),
+    "TP_TDN_num_sites_NR" = n_distinct(posid[patient %in% NR_pats]),
+    "TP_TDN_sum_abund" = sum(TP_TDN_sum_abund),
+    "TP_TDN_sum_abund_CR" = sum(TP_TDN_sum_abund[patient %in% CR_pats]),
+    "TP_TDN_sum_abund_NR" = sum(TP_TDN_sum_abund[patient %in% NR_pats]),
+    "TP_TDN_peak_abund" = max(TP_TDN_peak_abund),
+    "TP_TDN_peak_abund_CR" = max(c(0,TP_TDN_peak_abund[patient %in% CR_pats])),
+    #      "TP_peak_abund_CR" = ifelse(TP_peak_abund_CR < 0, 0, TP_peak_abund_CR),
+    "TP_TDN_peak_abund_NR" = max(c(0,TP_TDN_peak_abund[patient %in% NR_pats])),
+    #      "TP_peak_abund_NR" = ifelse(TP_peak_abund_NR < 0, 0, TP_peak_abund_NR),
+    "TP_TDN_peak_relAbund" = max(TP_TDN_peak_relAbund),
+    "TP_TDN_abund_gini" = gintools::pop_calcs(TP_TDN_peak_abund, calc = "gini"),
+    "TP_TDN_same" = sum(as.integer(strand == gene_ort)),
+    "TP_TDN_same_CR" = sum(as.integer(strand == gene_ort)[patient %in% CR_pats]),
+    "TP_TDN_same_NR" = sum(as.integer(strand == gene_ort)[patient %in% NR_pats]),
+    "TP_TDN_oppo" = sum(as.integer(strand != gene_ort)),
+    "TP_TDN_oppo_CR" = sum(as.integer(strand != gene_ort)[patient %in% CR_pats]),
+    "TP_TDN_oppo_NR" = sum(as.integer(strand != gene_ort)[patient %in% NR_pats]))
+
+
+####################
+
+
 sites_by_patient <- split(
   cond_uniq_sites[cond_uniq_sites$timepoint != "d0"], 
   cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]$patient)
@@ -267,6 +326,7 @@ gene_stats <- data.frame(
   "Cluster_target.min" = mod_refGenes$Cluster_target.min) %>%
   dplyr::full_join(., stats_tdn, by = c("loci", "gene_name", "gene_ort")) %>%
   dplyr::full_join(., stats_tp, by = c("loci", "gene_name", "gene_ort")) %>%
+  dplyr::full_join(., stats_tp_tdn, by = c("loci", "gene_name", "gene_ort")) %>%
   dplyr::mutate(
     "On_Onco_List" = gene_name %in% oncoGenes,
     "Top_1pc_Abund" = gene_name %in% top_one_pc_sonicAbund,
@@ -310,7 +370,25 @@ gene_stats <- dplyr::filter(
     TDN_sum_abund_NR, TP_sum_abund, TP_sum_abund_CR, TP_sum_abund_NR, 
     long_count, max_time, max_span, abund_gini, ort_fisher_test, 
     ort_fisher_test_CR, ort_fisher_test_NR, On_Onco_List, Top_1pc_Abund, 
-    Top_10pc_Abund, Within_Cluster, Cluster_target.min) %>%
+    Top_10pc_Abund, Within_Cluster, Cluster_target.min,
+    TP_TDN_num_patients,
+    TP_TDN_num_pats_CR,
+    TP_TDN_num_pats_NR,
+    TP_TDN_long_count,
+    TP_TDN_max_time,
+    TP_TDN_max_span,
+    TP_TDN_num_sites,
+    TP_TDN_num_sites_CR,
+    TP_TDN_num_sites_NR,
+    TP_TDN_sum_abund,
+    TP_TDN_sum_abund_CR,
+    TP_TDN_sum_abund_NR,
+    TP_TDN_peak_abund,
+    TP_TDN_peak_abund_CR,
+    TP_TDN_peak_abund_NR,
+    TP_TDN_peak_relAbund,
+    TP_TDN_abund_gini
+    ) %>%
   dplyr::mutate(
     TDN_freq = TDN_num_sites / (gene_width * total_tdn_sites),
     TDN_freq_CR = TDN_num_sites_CR / (gene_width * total_tdn_sites_CR),

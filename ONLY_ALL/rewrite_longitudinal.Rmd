@@ -1,0 +1,162 @@
+---
+title: 'longitudinal'
+author: "Adrian Cantu (Adapted from Christopher Nobles)"
+date: "`r format(Sys.time(), '%Y %B %d')`"
+output: 
+  pdf_document:
+#    latex_engine: lualatex
+    toc: true
+    keep_md: true
+    keep_tex: true
+    number_sections: false
+    toc_depth: 2
+    fig_caption: true
+    df_print: default
+    highlight: espresso
+header-includes: 
+  - \usepackage{float,indentfirst,booktabs,longtable,array,multirow,pdflscape,tabu}
+  - \usepackage[normalem]{ulem}
+  - \setlength{\defaultaddspace}{0em}
+  - \setlength{\parindent}{2em}
+fontsize: 11pt
+geometry: margin=0.75in
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(kableExtra)
+
+if(!exists('workingDir')) {workingDir <- "/home/ubuntu/data/CART19/CART19_from_git2"}
+if(!exists('utilsDir')) {utilsDir <- "/home/ubuntu/data/CART19/CART19_from_git2/utils"}
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  fig.align = "center",
+  comment = "",
+  echo = FALSE,
+  warning = FALSE,
+  error = TRUE,
+  message = FALSE,
+  cache = FALSE,
+  dpi = 300,
+  dev = "png",
+  results = "asis",
+  fig.pos = "H",
+  fig.width = 7,
+  dev.args = list(type = "cairo-png")
+)
+```
+
+
+```{r}
+# Import HGNC reference data for annotation and consistency ----
+hgnc_complete <- data.table::fread(
+  paste0("zcat ", file.path(utilsDir, "hgnc_complete_set.180207.txt.gz")),
+  sep = "\t", header = TRUE, 
+  select = c(
+    "HGNC ID", "Approved Symbol", "Approved Name", "Locus Group", 
+    "Locus Type", "Synonyms", "Previous Symbols", "Entrez Gene ID", 
+    "Ensembl Gene ID", "RefSeq (supplied by NCBI)", 
+    "UniProt ID (supplied by UniProt)"
+  ),
+  data.table = FALSE
+)
+
+names(hgnc_complete) <- c(
+  "hgnc_id", "symbol", "name", "locus_group", "locus_type", "alias_symbol", 
+  "prev_symbol", "entrez_id", "ensembl_gene_id", "refseq_accession", 
+  "uniprot_ids"
+)
+
+hgnc_complete <- dplyr::filter(hgnc_complete, !grepl("withdrawn", symbol)) %>%
+  dplyr::mutate(
+    kegg_id = paste0("hsa:", entrez_id),
+    entrez_id = paste0(entrez_id, ":EZID"),
+    alias_symbol = gsub(", ", "|", alias_symbol),
+    prev_symbol = gsub(", ", "|", prev_symbol),
+    extended_alias = paste0(
+      alias_symbol, "|", prev_symbol, "|", ensembl_gene_id, "|", 
+      refseq_accession, "|", uniprot_ids))
+
+```
+
+```{r}
+# redoo relevant parts of gene impact
+
+
+```
+
+
+```{r}
+
+gene_impact_tmp <- readRDS( # TODO, not sure where this comes from
+  file.path(workingDir,'ONLY_ALL',"only_ALL_cart19_gene_impact.rds")) 
+
+
+gene_impact <- gene_impact_tmp %>%
+  dplyr::select(
+    -ort_fisher_test, -ort_fisher_test_CR, -ort_fisher_test_NR
+  ) %>%
+  #dplyr::filter(!gene_name %in% excluded_gene_names) %>%
+  dplyr::mutate(gene_name = spraphal::alias_arbiter(
+    IDs = gene_name,
+    RefIDs = hgnc_complete$symbol,
+    aliasIDs = hgnc_complete$extended_alias,
+    sep = "|", remove_absent_IDs = NULL, quiet = TRUE))
+
+df3 <- gene_impact %>%
+  dplyr::filter(
+    TP_num_patients >= 2,
+    TP_num_sites >= 10,
+    max_span > 1,
+    max_time > 90
+  )
+
+
+df3.1 <- df3 %>%
+  dplyr::select(
+    gene_name, long_count, max_time, max_span, pct_chg, TP_peak_abund
+  )
+
+df3.2 <- df3 %>%
+  dplyr::arrange(
+    desc(max_span), desc(max_time), desc(long_count), desc(TP_num_sites),
+    desc(TP_num_patients), On_Onco_List
+  ) %>%
+  dplyr::select(
+    gene_name, max_span, max_time, long_count, TP_num_patients, TP_num_sites,
+    TP_peak_abund, On_Onco_List
+  ) %>%
+  dplyr::rename(
+    "Gene" = gene_name, "unique Obs." = long_count, "Time Span" = max_span,
+    "Longest Time" = max_time, "Num. Patients" = TP_num_patients,
+    "Patient Sites" = TP_num_sites, "Peak Abund." = TP_peak_abund,
+    "Onco-Related" = On_Onco_List
+  )
+
+```
+
+
+
+\newpage
+## Longitudinal Observation
+
+```{r long_obs_tbl,results='asis'}
+kable(
+    head(df3.2, n = 50), format = "latex", booktabs = TRUE, 
+    caption = paste(
+      "Table of top", nrow(head(df3.2, n = 50)), 
+      "genes identified by longitudinal observations of patients samples."), 
+    align = "c"
+  ) %>%
+  kableExtra::kable_styling(
+    latex_options = c("hold_position"),
+    font_size = 9
+  )
+```
+
+```{r}
+#TDN time zero , TP (timepoint) time not zero
+gene_impact_tmp %>% head()
+```
+
