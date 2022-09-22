@@ -195,7 +195,7 @@ stats_tp_tdn <- as.data.frame(
     timepoint = convert_time(as.character(timepoint))) %>%
   dplyr::select(
     loci, gene_name, gene_ort, posid, strand, 
-    estAbund, relAbund, patient, timepoint) %>%
+    estAbund, relAbund, patient, timepoint) %>% #TODO not sure it should be strand specific
   dplyr::group_by(loci, gene_name, gene_ort, patient, posid, strand) %>%
   dplyr::summarise(
     "TP_TDN_long_count" = n_distinct(timepoint),
