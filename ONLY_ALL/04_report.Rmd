@@ -588,30 +588,29 @@ kegg2.1$grp <- cluster_by_list_similarity(
 ## Identify genes observed over multiple timepoints within patients ----
 df3 <- gene_impact %>%
   dplyr::filter(
-    TP_num_patients >= 2,
+    TP_num_patients >= 3,
+    TDN_num_patients>=3,
     TP_num_sites >= 10,
+    TDN_num_sites >= 10,
     max_span > 1,
-    max_time > 90
-  )
-
-df3.1 <- df3 %>%
-  dplyr::select(
-    gene_name, long_count, max_time, max_span, pct_chg, TP_peak_abund
+    max_time > 20
   )
 
 df3.2 <- df3 %>%
   dplyr::arrange(
-    desc(max_span), desc(max_time), desc(long_count), desc(TP_num_sites),
-    desc(TP_num_patients), On_Onco_List
+    desc(TP_TDN_max_span), desc(max_time), desc(TP_TDN_long_count), desc(TP_TDN_num_sites),
+    desc(TP_TDN_num_patients), On_Onco_List
   ) %>%
   dplyr::select(
-    gene_name, max_span, max_time, long_count, TP_num_patients, TP_num_sites,
-    TP_peak_abund, On_Onco_List
+    gene_name, TP_TDN_max_span, max_time, TP_TDN_long_count, TP_TDN_num_patients, TP_TDN_num_sites,
+    TP_TDN_peak_abund,TP_TDN_peak_relAbund ,On_Onco_List
   ) %>%
+  dplyr::mutate(TP_TDN_peak_relAbund=paste0(as.character(round(TP_TDN_peak_relAbund,digits = 2)),'%')) %>% 
   dplyr::rename(
-    "Gene" = gene_name, "unique Obs." = long_count, "Time Span" = max_span,
-    "Longest Time" = max_time, "Num. Patients" = TP_num_patients,
-    "Patient Sites" = TP_num_sites, "Peak Abund." = TP_peak_abund,
+    "Gene" = gene_name, "Num. Timepoints" = TP_TDN_long_count, "Time Span" = TP_TDN_max_span,
+    "Longest Time" = max_time, "Patients" = TP_TDN_num_patients,
+    "Sites" = TP_TDN_num_sites, "Max Abund." = TP_TDN_peak_abund,
+    "Max RelAbund" = TP_TDN_peak_relAbund,
     "Onco-Related" = On_Onco_List
   )
 
@@ -958,49 +957,49 @@ df7_list <- df7_list[sapply(df7_list, nrow) > 0]
 
 ```{r writeResults, include=FALSE}
 
-output_impact <- dplyr::select(
-    df6, -TDN_sum_abund, -TP_sum_abund, -count, -tcount, -TDN_num_pats_CR,
-    -TDN_num_pats_NR, -TP_num_pats_CR, -TP_num_pats_NR, -TDN_num_sites_CR,
-    -TDN_num_sites_NR, -TP_num_sites_CR, -TP_num_sites_NR, -TDN_peak_abund_CR,
-    -TDN_peak_abund_NR, -TP_peak_abund_CR, -TP_peak_abund_NR, -TDN_sum_abund_CR,
-    -TDN_sum_abund_NR, -TP_sum_abund_CR, -TP_sum_abund_NR, -max_span,
-    -TDN_freq_CR, -TDN_freq_NR, -TP_freq_CR, -TP_freq_NR, -freq_diff_CR,
-    -freq_diff_NR, -pct_chg_CR, -pct_chg_NR, -Top_1pc_Abund, -Top_10pc_Abund
-  ) %>%
-  dplyr::mutate(
-    gene_name = paste0("'", gene_name),
-    TDN_peak_relAbund = round(TDN_peak_relAbund, digits = 3),
-    TP_peak_relAbund = round(TP_peak_relAbund, digits = 3),
-    abund_gini = round(abund_gini, digits = 3),
-    pct_chg = round(pct_chg, digits = 1)) %>%
-  dplyr::rename(
-    "Genomic_Loci" = loci, "Gene_Name" = gene_name,
-    "Gene_Orientation" = gene_ort, "Gene_Width_(kb)" = gene_width,
-    "Obs_TDN_Products" = TDN_num_patients, "Obs_Patients" = TP_num_patients,
-    "Num_Sites_TDN" = TDN_num_sites, "Num_Sites_Patients" = TP_num_sites,
-    "Peak_Abund_TDN" = TDN_peak_abund, "Peak_Abund_Patients" = TP_peak_abund,
-    "Peak_RelAbund_TDN" = TDN_peak_relAbund,
-    "Peak_RelAbund_Patients" = TP_peak_relAbund,
-    "Longitudinal_Count" = long_count, "Last_Timepoint" = max_time,
-    "Abund_Gini" = abund_gini, "Freq_TDN_Sites" = TDN_freq,
-    "Freq_Patient_Sites" = TP_freq, "Freq_Difference" = freq_diff,
-    "Percent_Freq_Change" = pct_chg, "Enrichment" = enr_freq,
-    "Depletion" = dep_freq, "Abundance" = abund, "Longitudinal" = long,
-    #"Cluster" = clust,
-    "Criteria" = crit_id
-  ) %>%
-  as.data.frame()
-
-unlink(list.files(
-  path = outputDir, pattern = "_cart19_goi_data.csv", full.names = TRUE
-))
-
-write.csv(
-  output_impact,
-  file = file.path(paste0(gsub("-", "", Sys.Date()), "_cart19_goi_data.csv")),
-  quote = TRUE,
-  row.names = FALSE
-)
+# output_impact <- dplyr::select(
+#     df6, -TDN_sum_abund, -TP_sum_abund, -count, -tcount, -TDN_num_pats_CR,
+#     -TDN_num_pats_NR, -TP_num_pats_CR, -TP_num_pats_NR, -TDN_num_sites_CR,
+#     -TDN_num_sites_NR, -TP_num_sites_CR, -TP_num_sites_NR, -TDN_peak_abund_CR,
+#     -TDN_peak_abund_NR, -TP_peak_abund_CR, -TP_peak_abund_NR, -TDN_sum_abund_CR,
+#     -TDN_sum_abund_NR, -TP_sum_abund_CR, -TP_sum_abund_NR, -max_span,
+#     -TDN_freq_CR, -TDN_freq_NR, -TP_freq_CR, -TP_freq_NR, -freq_diff_CR,
+#     -freq_diff_NR, -pct_chg_CR, -pct_chg_NR, -Top_1pc_Abund, -Top_10pc_Abund
+#   ) %>%
+#   dplyr::mutate(
+#     gene_name = paste0("'", gene_name),
+#     TDN_peak_relAbund = round(TDN_peak_relAbund, digits = 3),
+#     TP_peak_relAbund = round(TP_peak_relAbund, digits = 3),
+#     abund_gini = round(abund_gini, digits = 3),
+#     pct_chg = round(pct_chg, digits = 1)) %>%
+#   dplyr::rename(
+#     "Genomic_Loci" = loci, "Gene_Name" = gene_name,
+#     "Gene_Orientation" = gene_ort, "Gene_Width_(kb)" = gene_width,
+#     "Obs_TDN_Products" = TDN_num_patients, "Obs_Patients" = TP_num_patients,
+#     "Num_Sites_TDN" = TDN_num_sites, "Num_Sites_Patients" = TP_num_sites,
+#     "Peak_Abund_TDN" = TDN_peak_abund, "Peak_Abund_Patients" = TP_peak_abund,
+#     "Peak_RelAbund_TDN" = TDN_peak_relAbund,
+#     "Peak_RelAbund_Patients" = TP_peak_relAbund,
+#     "Longitudinal_Count" = long_count, "Last_Timepoint" = max_time,
+#     "Abund_Gini" = abund_gini, "Freq_TDN_Sites" = TDN_freq,
+#     "Freq_Patient_Sites" = TP_freq, "Freq_Difference" = freq_diff,
+#     "Percent_Freq_Change" = pct_chg, "Enrichment" = enr_freq,
+#     "Depletion" = dep_freq, "Abundance" = abund, "Longitudinal" = long,
+#     #"Cluster" = clust,
+#     "Criteria" = crit_id
+#   ) %>%
+#   as.data.frame()
+# 
+# unlink(list.files(
+#   path = outputDir, pattern = "_cart19_goi_data.csv", full.names = TRUE
+# ))
+# 
+# write.csv(
+#   output_impact,
+#   file = file.path(paste0(gsub("-", "", Sys.Date()), "_cart19_goi_data.csv")),
+#   quote = TRUE,
+#   row.names = FALSE
+# )
 
 ```
 
