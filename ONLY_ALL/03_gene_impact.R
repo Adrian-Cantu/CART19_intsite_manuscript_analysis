@@ -213,6 +213,12 @@ stats_tp_tdn <- as.data.frame(
     "TP_TDN_num_pats_NR" = n_distinct(patient[patient %in% NR_pats]),
     "TP_TDN_long_count" = max(TP_TDN_long_count),
     "TP_TDN_max_time" = max(TP_TDN_last_time),
+    "TP_TDN_max_time_2" = ifelse(length(TP_TDN_last_time)>=2,
+                             sort(TP_TDN_last_time, decreasing=TRUE)[2],
+                             NA),
+    "TP_TDN_max_time_3" = ifelse(length(TP_TDN_last_time)>=3,
+                                 sort(TP_TDN_last_time, decreasing=TRUE)[3],
+                                 NA),
     "TP_TDN_max_span" = max(TP_TDN_span),
     "TP_TDN_span_2" = ifelse(length(TP_TDN_span)>=2,
                              sort(TP_TDN_span, decreasing=TRUE)[2],
@@ -242,6 +248,7 @@ stats_tp_tdn <- as.data.frame(
     .groups = 'drop') %>% 
   rowwise() %>% 
   mutate(TP_TDN_top3avg=mean(c(TP_TDN_max_span,TP_TDN_span_2,TP_TDN_span_3),na.rm=TRUE)) %>% 
+  mutate(TP_TDN_time_top3avg=mean(c(TP_TDN_max_time,TP_TDN_max_time_2,TP_TDN_max_time_3),na.rm=TRUE)) %>% 
   ungroup()
 
 
@@ -399,7 +406,8 @@ gene_stats <- dplyr::filter(
     TP_TDN_peak_abund_NR,
     TP_TDN_peak_relAbund,
     TP_TDN_abund_gini,
-    TP_TDN_top3avg
+    TP_TDN_top3avg,
+    TP_TDN_time_top3avg
     ) %>%
   dplyr::mutate(
     TDN_freq = TDN_num_sites / (gene_width * total_tdn_sites),
