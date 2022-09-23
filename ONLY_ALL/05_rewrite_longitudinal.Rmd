@@ -118,20 +118,21 @@ df3 <- gene_impact %>%
 
 df3.2 <- df3 %>%
   dplyr::arrange(
-    desc(TP_TDN_max_span), desc(max_time), desc(TP_TDN_long_count), desc(TP_TDN_num_sites),
+    desc(TP_TDN_top3avg),desc(TP_TDN_max_span), desc(max_time), desc(TP_TDN_long_count), desc(TP_TDN_num_sites),
     desc(TP_TDN_num_patients), On_Onco_List
   ) %>%
   dplyr::select(
     gene_name, TP_TDN_max_span, max_time, TP_TDN_long_count, TP_TDN_num_patients, TP_TDN_num_sites,
-    TP_TDN_peak_abund,TP_TDN_peak_relAbund ,On_Onco_List
+    TP_TDN_peak_abund,TP_TDN_peak_relAbund ,On_Onco_List,TP_TDN_top3avg
   ) %>%
-  dplyr::mutate(TP_TDN_peak_relAbund=paste0(as.character(round(TP_TDN_peak_relAbund,digits = 2)),'%')) %>% 
+  dplyr::mutate(TP_TDN_peak_relAbund=paste0(as.character(round(TP_TDN_peak_relAbund,digits = 2)),'%'),
+      TP_TDN_top3avg=round(TP_TDN_top3avg,digits = 2) ) %>% 
   dplyr::rename(
     "Gene" = gene_name, "Num. Timepoints" = TP_TDN_long_count, "Time Span" = TP_TDN_max_span,
     "Longest Time" = max_time, "Patients" = TP_TDN_num_patients,
     "Sites" = TP_TDN_num_sites, "Max Abund." = TP_TDN_peak_abund,
     "Max RelAbund" = TP_TDN_peak_relAbund,
-    "Onco-Related" = On_Onco_List
+    "Onco-Related" = On_Onco_List, "t3avg"=TP_TDN_top3avg
   )
 
 ```
@@ -171,7 +172,7 @@ kable(
 ```{r long_obs_tbl2,results='asis'}
 kbl(df3.2, longtable = T, booktabs = T, caption = "Genes identified by longitudinal observations .") %>%
 #add_header_above(c(" ", "Group 1" = 5, "Group 2" = 6)) %>%
-kable_styling(latex_options = c("repeat_header","striped"),font_size = 7)
+kable_styling(latex_options = c("repeat_header","striped"),font_size = 6)
 
 ```
 

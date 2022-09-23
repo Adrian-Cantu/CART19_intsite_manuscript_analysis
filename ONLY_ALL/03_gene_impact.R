@@ -203,7 +203,8 @@ stats_tp_tdn <- as.data.frame(
     "TP_TDN_last_time" = max(timepoint),
     "TP_TDN_sum_abund" = sum(estAbund),
     "TP_TDN_peak_abund" = max(estAbund),
-    "TP_TDN_peak_relAbund" = max(relAbund)) %>%
+    "TP_TDN_peak_relAbund" = max(relAbund),
+    "TP_TDN_span" = TP_TDN_last_time - TP_TDN_first_time ) %>%
   dplyr::ungroup() %>% 
   dplyr::group_by(loci, gene_name, gene_ort) %>%
   dplyr::summarise(
@@ -212,7 +213,13 @@ stats_tp_tdn <- as.data.frame(
     "TP_TDN_num_pats_NR" = n_distinct(patient[patient %in% NR_pats]),
     "TP_TDN_long_count" = max(TP_TDN_long_count),
     "TP_TDN_max_time" = max(TP_TDN_last_time),
-    "TP_TDN_max_span" = max(TP_TDN_last_time - TP_TDN_first_time),
+    "TP_TDN_max_span" = max(TP_TDN_span),
+    "TP_TDN_span_2" = ifelse(length(TP_TDN_span)>=2,
+                             sort(TP_TDN_span, decreasing=TRUE)[2],
+                             NA),
+    "TP_TDN_span_3" = ifelse(length(TP_TDN_span)>=3,
+                             sort(TP_TDN_span, decreasing=TRUE)[3],
+                             NA),  
     "TP_TDN_num_sites" = n_distinct(posid),
     "TP_TDN_num_sites_CR" = n_distinct(posid[patient %in% CR_pats]),
     "TP_TDN_num_sites_NR" = n_distinct(posid[patient %in% NR_pats]),
@@ -231,7 +238,11 @@ stats_tp_tdn <- as.data.frame(
     "TP_TDN_same_NR" = sum(as.integer(strand == gene_ort)[patient %in% NR_pats]),
     "TP_TDN_oppo" = sum(as.integer(strand != gene_ort)),
     "TP_TDN_oppo_CR" = sum(as.integer(strand != gene_ort)[patient %in% CR_pats]),
-    "TP_TDN_oppo_NR" = sum(as.integer(strand != gene_ort)[patient %in% NR_pats]))
+    "TP_TDN_oppo_NR" = sum(as.integer(strand != gene_ort)[patient %in% NR_pats]),
+    .groups = 'drop') %>% 
+  rowwise() %>% 
+  mutate(TP_TDN_top3avg=mean(c(TP_TDN_max_span,TP_TDN_span_2,TP_TDN_span_3),na.rm=TRUE)) %>% 
+  ungroup()
 
 
 ####################
@@ -387,7 +398,8 @@ gene_stats <- dplyr::filter(
     TP_TDN_peak_abund_CR,
     TP_TDN_peak_abund_NR,
     TP_TDN_peak_relAbund,
-    TP_TDN_abund_gini
+    TP_TDN_abund_gini,
+    TP_TDN_top3avg
     ) %>%
   dplyr::mutate(
     TDN_freq = TDN_num_sites / (gene_width * total_tdn_sites),
