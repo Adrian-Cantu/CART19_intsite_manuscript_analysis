@@ -1,6 +1,6 @@
 ---
 params: 
-    pTRIAL: "XXXA"
+    pTRIAL: "ALL"
 title: 'Longitudinal `r params$pTRIAL`'
 #author: "Adrian Cantu (Adapted from Christopher Nobles)"
 date: "`r format(Sys.time(), '%Y %B %d')`"
@@ -25,7 +25,7 @@ geometry: margin=0.75in
 knit: (
   function(inputFile, encoding) { 
   
-    ptrial <- 'CLL'
+    ptrial <- 'ALL'
   
     rmarkdown::render( 
       input       = inputFile, 
@@ -58,6 +58,8 @@ knitr::opts_chunk$set(
   dev.args = list(type = "cairo-png")
 )
 TRIAL <- params$pTRIAL
+nnn<-500 # max cutoff to show in the plot (will only affect drowing, not results)
+p_b <- 0.2 # proportion of total breaks used to define cutoff
 ```
 
 
@@ -120,11 +122,40 @@ gene_impact <- gene_impact_tmp %>%
     aliasIDs = hgnc_complete$extended_alias,
     sep = "|", remove_absent_IDs = NULL, quiet = TRUE))
 
+
+total_breaks_v <- gene_impact %>%
+    dplyr::filter(
+      TP_TDN_num_patients >= 3,
+      TP_TDN_num_sites >= 3,
+    ) %>%
+  pull(TP_TDN_sum_abund
+
+       ) %>% 
+  sort(.,decreasing = TRUE)
+total_breaks <-   sum(total_breaks_v)
+
+first_top <- which(cumsum(total_breaks_v) > total_breaks*p_b)[1]
+
+break_num_gene <- tibble(x=c(1:nnn),
+  y= sapply(c(1:nnn), function(xx){
+  gene_impact %>%
+    dplyr::filter(
+      TP_TDN_num_patients >= 3,
+      TP_TDN_num_sites >= 3,
+      TP_TDN_sum_abund >= xx,
+    ) %>%
+  nrow() 
+}))
+
+break_rank_gene <- tibble(x=c(1:length(total_breaks_v)),
+  y= total_breaks_v)
+
+
 df3 <- gene_impact %>%
   dplyr::filter(
     TP_TDN_num_patients >= 3,
     TP_TDN_num_sites >= 3,
-    TP_TDN_sum_abund >= 10,
+    TP_TDN_sum_abund >= total_breaks_v[first_top],
 #    TP_TDN_max_span>5
   )
 
@@ -150,19 +181,50 @@ df3.2 <- df3 %>%
 ```
 
 Insertion sites that are close to Genes (less than 5,000bp) are grouped and labeled with that
-gene name. Longitudinal gene of interest are those that have insertion sites in at least 3 different positions in at least 3 patients and a total of at least 10 independent sonic breaks. 
+gene name. Longitudinal gene of interest are those that have insertion sites in at least 3 different positions in at least 3 patients. Additionally, a cutoff of at least `r total_breaks_v[first_top]` independent sonic breaks is imposed. This number is chosen such that the selected genes represent at lease `r  paste0(as.character(p_b*100),'%')` of all sonic breaks (see plot)  
 The table has the following columns:
 
 * **gene**: Gene name according to the HUGO Gene nomenclature committee (version from 2018-02-07)
-* **Time Span**: Maximum time between the first and last sample that have the same insertion in this gene and originate from the same patient.
 * **t3avg**: average of last time point for the 3 latest insertion sites.
+* **Time Span**: Maximum time between the first and last sample that have the same insertion in this gene and originate from the same patient.
 * **Longest time**: Last time point(in days) where insertion are observed.
 * **Num. Timepoints**: Number of times points the most common insertion site is observed.
 * **Patients**: Number of patient with at least one insertion near this gene.
 * **Sites**: Number of distinct insertion positions.
 * **Max Abund**: Maximum sonic abundance observed for an insertion site near this gene.
 * **Max RelAbund**: Maximum relative abundance observed for an insertion site near this gene.
-* **Onco-Related**: Wheter the gene is in the cancer related list
+* **Onco-Related**: Whether the gene is in the cancer related list
+
+
+```{r fig1, fig.cap="Effect of filtering by sonic breaks", out.height='40%'}
+ggplot(data=break_num_gene, aes(x=x, y=y)) +
+  geom_line() +
+  theme_classic() +
+  labs(x="Required sonic breaks",
+       y = "Number of genes") +
+  geom_vline(xintercept = total_breaks_v[first_top],linetype = "dashed") +
+  geom_text(aes(total_breaks_v[first_top]-nnn*0.01,length(total_breaks_v)/2,
+                label = paste0('cutoff=',total_breaks_v[first_top]," breaks"),hjust=1))+
+  geom_hline(yintercept = first_top,linetype = "dashed") +
+    geom_text(aes(total_breaks_v[first_top]-nnn*0.01,first_top,
+                label = paste0('cutoff=',first_top," genes"),vjust=1,hjust=1))+
+  scale_x_continuous(expand = c(0,NA)) 
+#  scale_y_continuous(expand = c(0.5,NA)) 
+
+```
+
+```{r fig2, fig.cap="breaks vs gene rank", out.height='40%'}
+ggplot(data=break_rank_gene,aes(x=x,y=y)) +
+  geom_line() +
+  theme_classic() +
+  scale_x_log10() +
+  geom_vline(xintercept = first_top,linetype = "dashed") +
+  geom_text(aes(first_top,max(total_breaks_v)/2,
+                label = paste0('cutoff=',first_top,' genes'),hjust=1)) +
+    labs(x="Gene rank (log10)",
+       y = "Sonic Breaks")
+```
+
 
 \newpage
 ## Longitudinal Observation
@@ -183,11 +245,12 @@ kable(
 
 
 ```{r long_obs_tbl2,results='asis'}
-kbl(df3.2, longtable = T, booktabs = T, caption = "Genes identified by longitudinal observations .") %>%
-#add_header_above(c(" ", "Group 1" = 5, "Group 2" = 6)) %>%
+kbl(df3.2, longtable = T, booktabs = T, caption = paste0(first_top," Genes identified by longitudinal observations.")) %>%
 kable_styling(latex_options = c("repeat_header","striped"),font_size = 5.5)
 
 ```
+
+
 
 
 
