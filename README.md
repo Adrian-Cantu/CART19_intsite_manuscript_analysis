@@ -110,3 +110,14 @@ loaded via a namespace (and not attached):
 [101] timeDate_3043.102          class_7.3-14
 [103] rmarkdown_1.8              base64enc_0.1-3
 ```
+
+
+# CART19 set 
+
+| Set name | Included Trials |
+|:--------:|:---------------:|
+|    ALL   |       ALL       |
+|    CLL   |       CLL       |
+|   GILL   |       Gill      |
+|   CALL   |     ALL,CLL     |
+|   GCALL  |   Gill,ALL,CLL  |

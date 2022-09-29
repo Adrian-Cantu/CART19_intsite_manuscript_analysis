@@ -1,21 +1,26 @@
 ---
+params:
+  pTRIAL: "CALL"
+  tPART: 'NoNE'
+#title: "r params$tPART Patients"
 title: |
-    | Genes of interest marked by vector integration
-    | All ALL Patients and 
-    | Response Groups (CR/PRtd & PR/NR & NA)
+  | Genes of interest marked by vector integration
+  | `r params$tPART` Patients and
+  | Response Groups (CR/PRtd & PR/NR & NA)
 author: "Adrian Cantu (Adapted from Christopher Nobles)"
 date: "`r format(Sys.time(), '%Y %B %d')`"
+
 output: 
   pdf_document:
 #    latex_engine: lualatex
-    toc: true
-    keep_md: true
-    keep_tex: true
-    number_sections: false
-    toc_depth: 2
-    fig_caption: true
-    df_print: default
-    highlight: espresso
+    # toc: true
+    # keep_md: true
+    # keep_tex: true
+    # number_sections: false
+    # toc_depth: 2
+    # fig_caption: true
+    # df_print: default
+    # highlight: espresso
 header-includes: 
   - \usepackage{float,indentfirst,booktabs,longtable,array,multirow,pdflscape,tabu}
   - \usepackage[normalem]{ulem}
@@ -23,6 +28,16 @@ header-includes:
   - \setlength{\parindent}{2em}
 fontsize: 11pt
 geometry: margin=0.75in
+knit: (
+  function(inputFile, encoding) { 
+    
+    ptrial <- 'CALL'
+
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      params      = list(pTRIAL=ptrial,tPART=ifelse(ptrial=='ALL','ALL',ifelse(ptrial=='CLL','CLL',ifelse(ptrial=='CALL','ALL and CLL','none')))),      
+      output_file = paste(ptrial,'_goi_', Sys.Date(), '.pdf', sep='')) })
 ---
 
 ------------------------------------------------------------------------
@@ -79,7 +94,7 @@ if (is.null(opts_knit$get("rmarkdown.pandoc.to"))) {
 } else {
   doc_format <-  opts_knit$get("rmarkdown.pandoc.to")
 }
-
+TRIAL <- params$pTRIAL
 ```
 
 ```{r analysis, include=FALSE}
@@ -293,7 +308,7 @@ custom_theme <- theme_bw() +
 #file <- grep("specimen_data", data_files, value = TRUE)
 #specimen_data <- readRDS(file.path(outputDir, file)) #TOCHANGE maybe never used?
 
-cond_uniq_sites <- readRDS(file.path(workingDir,'ONLY_ALL',"only_ALL_condensed_intsites.rds")) #TODO
+cond_uniq_sites <- readRDS(file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_condensed_intsites.rds"))) #TODO
 # I need to replace this with my own data
 #cond_uniq_sites %>% as.data.frame(row.names = NULL) %>% head()
 # cond_uniq_sites <- cond_uniq_sites[
@@ -306,7 +321,7 @@ cond_uniq_sites <- readRDS(file.path(workingDir,'ONLY_ALL',"only_ALL_condensed_i
 #cluster_list <- readRDS(file.path(outputDir, "cart19_clusters.rds")) #TODO, not sure where this comes from (scan stats)
 
 gene_stats <- read.csv( # TODO, not sure where this comes from
-    file.path(workingDir,'ONLY_ALL',"only_ALL_cart19_gene_stats.csv")) %>%
+    file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_cart19_gene_stats.csv"))) %>%
   dplyr::mutate(gene_name = alias_arbiter(
     IDs = gene_name,
     RefIDs = hgnc_complete$symbol,
@@ -314,7 +329,7 @@ gene_stats <- read.csv( # TODO, not sure where this comes from
     sep = "|", remove_absent_IDs = NULL, quiet = TRUE))
 
 gene_impact <- readRDS( # TODO, not sure where this comes from
-    file.path(workingDir,'ONLY_ALL',"only_ALL_cart19_gene_impact.rds")) %>%
+    file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_cart19_gene_impact.rds"))) %>%
   dplyr::select(
     -ort_fisher_test, -ort_fisher_test_CR, -ort_fisher_test_NR
   ) %>%
@@ -586,33 +601,45 @@ kegg2.1$grp <- cluster_by_list_similarity(
 ```{r analysis3}
 
 ## Identify genes observed over multiple timepoints within patients ----
+# df3 <- gene_impact %>%
+#   dplyr::filter(
+#     TP_num_patients >= 3,
+#     TDN_num_patients>=3,
+#     TP_num_sites >= 10,
+#     TDN_num_sites >= 10,
+#     max_span > 1,
+#     max_time > 20
+#   )
+
+# changed to use all timepoints
+
 df3 <- gene_impact %>%
   dplyr::filter(
-    TP_num_patients >= 3,
-    TDN_num_patients>=3,
-    TP_num_sites >= 10,
-    TDN_num_sites >= 10,
-    max_span > 1,
-    max_time > 20
+    TP_TDN_num_patients >= 3,
+    TP_TDN_num_sites >= 3,
+    TP_TDN_sum_abund >= 10,
+#    TP_TDN_max_span>5
   )
 
 df3.2 <- df3 %>%
   dplyr::arrange(
-    desc(TP_TDN_max_span), desc(max_time), desc(TP_TDN_long_count), desc(TP_TDN_num_sites),
+    desc(TP_TDN_time_top3avg),desc(TP_TDN_max_span), desc(max_time), desc(TP_TDN_long_count), desc(TP_TDN_num_sites),
     desc(TP_TDN_num_patients), On_Onco_List
   ) %>%
   dplyr::select(
-    gene_name, TP_TDN_max_span, max_time, TP_TDN_long_count, TP_TDN_num_patients, TP_TDN_num_sites,
+    gene_name, TP_TDN_time_top3avg,TP_TDN_max_span, max_time, TP_TDN_long_count, TP_TDN_num_patients, TP_TDN_num_sites,
     TP_TDN_peak_abund,TP_TDN_peak_relAbund ,On_Onco_List
   ) %>%
-  dplyr::mutate(TP_TDN_peak_relAbund=paste0(as.character(round(TP_TDN_peak_relAbund,digits = 2)),'%')) %>% 
+  dplyr::mutate(TP_TDN_peak_relAbund=paste0(as.character(round(TP_TDN_peak_relAbund,digits = 2)),'%'),
+      TP_TDN_time_top3avg=round(TP_TDN_time_top3avg,digits = 2) ) %>% 
   dplyr::rename(
     "Gene" = gene_name, "Num. Timepoints" = TP_TDN_long_count, "Time Span" = TP_TDN_max_span,
     "Longest Time" = max_time, "Patients" = TP_TDN_num_patients,
     "Sites" = TP_TDN_num_sites, "Max Abund." = TP_TDN_peak_abund,
     "Max RelAbund" = TP_TDN_peak_relAbund,
-    "Onco-Related" = On_Onco_List
+    "Onco-Related" = On_Onco_List, "t3avg"=TP_TDN_time_top3avg
   )
+
 
 go3.2 <- fisher_hyper_GO_test(
   df3.2$Gene, all_GOBP_list, odds = FALSE, p_adjust = 'BH',
@@ -863,7 +890,8 @@ kegg_heatmap_data <- as.data.frame(kegg_term_matrix) %>%
     path_id = row.names(.),
     KEGG_Term = kegg_term_data$KEGG_Term[
       match(path_id, kegg_term_data$path_id)],
-    f_kegg_term = stringr::str_extract(KEGG_Term, "[\\w\\s-,]{30}"),
+#    f_kegg_term = stringr::str_extract(KEGG_Term, "[\\w\\s-,]{30}"),
+    f_kegg_term = KEGG_Term,
     f_kegg_term = ifelse(
       is.na(f_kegg_term), KEGG_Term, paste0(f_kegg_term, "...")),
     f_kegg_term = factor(f_kegg_term, levels = f_kegg_term)

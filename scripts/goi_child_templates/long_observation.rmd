@@ -10,7 +10,7 @@ kable(
     align = "c"
   ) %>%
   kableExtra::kable_styling(
-    latex_options = c("hold_position"),
+    latex_options = c("hold_position","scale_down"),
     font_size = 9
   )
 ```
