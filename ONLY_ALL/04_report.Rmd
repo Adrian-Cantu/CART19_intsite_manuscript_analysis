@@ -95,6 +95,7 @@ if (is.null(opts_knit$get("rmarkdown.pandoc.to"))) {
   doc_format <-  opts_knit$get("rmarkdown.pandoc.to")
 }
 TRIAL <- params$pTRIAL
+top_ll <- 100 # number of top genes to take from longitudinal
 ```
 
 ```{r analysis, include=FALSE}
@@ -682,10 +683,10 @@ potential_genes <- list(
   "Enrichment" = df1.2$Gene,
   "Depletion" = df1.4$Gene,
   "Abundance" = df2.2$Gene,
-  "Longitudinal" = df3.2$Gene,
+  "Longitudinal" = df3.2$Gene[1:top_ll],
   #"Clusters" = df4.1$Gene,
   "Composite" = unique(c(
-    df1.2$Gene, df2.2$Gene, df3.2$Gene #, df4.1$Gene
+    df1.2$Gene, df2.2$Gene, df3.2$Gene[1:top_ll] #, df4.1$Gene
   ))
 )
 
@@ -1049,7 +1050,7 @@ In this report, we mined the data collected from integration site sequencing for
 
 -   **Clonal Abundance** can be determined during analysis by quantifying the number of sites of linker ligation associated with each unique integration site. This method is further described in [**Berry *et al.* 2012**](https://www.ncbi.nlm.nih.gov/pubmed/22238265). This allows clonal expansion to be quantified. The top 1% of the genes were selected for study based on their maximal peak clonal abundance.
 
--   **Longitudinal Observation** of clones is the quantification of observed timespans and last observed timepoints. The maximum value for clones within a gene were considered for characterization of the gene in this analysis. Genes were only considered if there were 10 or more integration sites isolated from at least two different patient samples. Genes were also not considered if they only consited of clones which were observed once or the last observed timepoint was less than 90 days from initial infusion.
+-   **Longitudinal Observation** Longitudinal gene of interest are those that have insertion sites in at least 3 different positions in at least 3 patients. Additionally, a cutoff of at least 10 independent sonic breaks is imposed and only the top `r top_ll`by average of last time point for the 3 latest insertion sites are selected.
 
 A point to keep in mind through all this analysis is that integration sites are sampled from a larger population. It would be rare for all integration sites in a sample to be represented in the sequence data.
 
