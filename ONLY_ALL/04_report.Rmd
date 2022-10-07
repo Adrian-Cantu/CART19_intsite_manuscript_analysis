@@ -1,6 +1,6 @@
 ---
 params:
-  pTRIAL: "CALL"
+  pTRIAL: "ALL"
   tPART: 'NoNE'
 #title: "r params$tPART Patients"
 title: |
@@ -1144,7 +1144,7 @@ Gene Ontologies were extracted from the `GO.db` R-package (v3.14). KEGG pathways
 # Comprehensive Genes of Interest Table
 
 ```{r sup_table}
-df6 %>%
+df8 <- df6 %>%
   dplyr::mutate(
     seqnames = stringr::str_extract(loci, "[\\w]+"),
     range = stringr::str_extract(loci, "[0-9:]+$"),
@@ -1168,7 +1168,8 @@ df6 %>%
     "Peak Abund." = TP_peak_abund,
     "Long. Obs." = max_span,
     "Criteria" = crit_id
-  ) %>%
+  ) 
+df8 %>%
   kable(
     format = "latex", booktabs = TRUE, longtable = TRUE,
     caption = "Table of all genes identified within analysis.",
@@ -1181,3 +1182,15 @@ df6 %>%
   landscape()
 
 ```
+
+```{r}
+#df6
+
+wb <- openxlsx::createWorkbook()
+openxlsx::addWorksheet(wb, paste0('goi_',TRIAL))
+openxlsx::writeDataTable(wb,paste0('goi_',TRIAL),df8)
+openxlsx::saveWorkbook(wb,
+  file.path(paste0('goi_comprehensive_',TRIAL,'_',format(Sys.time(), "%Y%m%d"),'.xlsx')),
+  overwrite = TRUE)
+```
+
