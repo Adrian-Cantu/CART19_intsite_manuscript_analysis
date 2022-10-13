@@ -70,16 +70,6 @@ knitr::opts_chunk$set(
 TRIAL <- params$pTRIAL
 ```
 
-
-
-```{r}
-# clusters <- readRDS(paste0("only_",TRIAL,"_cart19_clusters.rds")) %>%
-#   as.data.frame(row.names = NULL) %>%
-#   filter(clus.origin=='Timepoint') %>% 
-#   GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
-# clusters %>% as.data.frame(row.names = NULL)
-```
-
 ```{r}
 
 
@@ -196,13 +186,19 @@ timepoint_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
 
 
 ```{r}
-# scan_sites <- gintools:::scan_format(
-#   tdn_sites, timepoint_sites, grouping = "patient")
-scan_sites <- gintools:::scan_format(
-  tdn_sites, timepoint_sites, grouping = "specimen")
-clust_name <- file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_long_clusters.rds"))
+clust_name <- file.path(workingDir,'ONLY_ALL','cluster_reports',paste0("only_",TRIAL,"_long_clusters.rds"))
 
-if( !file.exists(clust_name) ) {
+is_cache <- FALSE
+if(file.exists(clust_name)) {
+ if(as.Date(file.info(clust_name)$ctime) == Sys.Date()) {
+  is_cache <- TRUE 
+ }
+}
+
+if( !is_cache ) {
+  scan_sites <- gintools:::scan_format(
+  tdn_sites, timepoint_sites, grouping = "patient") # use "patient" for the same insertion in multiple timepoints on the same patient to be counted as one, use "specimen" to be counted multiple times
+  
 scanned_clus <- geneRxCluster::gRxCluster(
   object = scan_sites$chr, 
   starts = scan_sites$pos, 
