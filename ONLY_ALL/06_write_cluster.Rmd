@@ -226,6 +226,19 @@ scanned_clus <- geneRxCluster::gRxCluster(
 
 ```
 
+This report list the clusters of insertion sites identified using Scan Statistics ([**Berry *et al.* 2014**](https://academic.oup.com/bioinformatics/article/30/11/1493/282534)) as significantly different between Pre- and Post-infusion samples.
+
+The table has the following columns:
+
+* **Cluster**: location on the genome
+* **width**: width of the cluster
+* **num PreInf sites**: number of sites in this interval in the pre-infusion (time 0) samples
+* **num PostInf sites**: number of sites in this interval in the post-infusion (time 0) samples
+* **target.min**: score of the cluster
+* **genes**: genes that intersect the cluster
+
+
+
 ```{r needname,results='asis'}
 #linebreak(genes_in_cluster,align = 'l',linebreaker = ',')) Clusters identified by longitudinal observations.
 scanned_clus %>% 
@@ -238,6 +251,6 @@ scanned_clus %>%
   dplyr::rename('num PostInf sites'=n_sites_tp) %>% 
   dplyr::rename('genes'=genes_in_cluster) %>% 
   kbl(booktabs = T,longtable = T, escape=FALSE,caption ="Clusters identified by longitudinal observations",linesep = '\\midrule') %>%
-  kable_styling(latex_options = c("repeat_header"))
+  kable_styling(latex_options = c("repeat_header"),font_size = 6)
 ```
 
