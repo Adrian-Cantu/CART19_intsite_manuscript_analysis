@@ -1,0 +1,6 @@
+hub ALL UCSCHub
+shortLabel ALL UCSC Hub
+longLabel UCSC Genome Informatics Hub for ALL_data
+genomesFile genomes.txt
+email garbanyo@gmail.com
+descriptionUrl ucscHub.html

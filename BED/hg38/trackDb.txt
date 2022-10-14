@@ -1,0 +1,11 @@
+track ALL_post_inf
+bigDataUrl ALL_tp.bed
+shortLabel ALL tp
+longLabel ALL post infusion sites
+type bigBed
+
+track ALL_pre_inf
+bigDataUrl ALL_tdn.bed
+shortLabel ALL tdn
+longLabel ALL pre infusion sites
+type bigBed
