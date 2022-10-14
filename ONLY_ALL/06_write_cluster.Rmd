@@ -2,6 +2,7 @@
 params: 
   pTRIAL: "ALL"
   tPART: 'NoNE'
+  count: 'single'
 #title: "r params$tPART Patients"
 title: |
   | Scan Stat clusters
@@ -35,8 +36,10 @@ knit: (
     rmarkdown::render( 
       input       = inputFile, 
       encoding    = encoding, 
-      params      = list(pTRIAL=ptrial,tPART=ifelse(ptrial=='ALL','ALL',ifelse(ptrial=='CLL','CLL',ifelse(ptrial=='CALL','ALL and CLL','none')))),      
-      output_file = paste(ptrial,'_Scan_stats_', Sys.Date(), '.pdf', sep='')) })
+      params      = list(pTRIAL=ptrial,
+                         count='single',
+                         tPART=ifelse(ptrial=='ALL','ALL',ifelse(ptrial=='CLL','CLL',ifelse(ptrial=='CALL','ALL and CLL','none')))),      
+      output_file = paste(ptrial,'_Scan_stats_single', Sys.Date(), '.pdf', sep='')) })
 ---
 
 ```{r setup, include=FALSE}
@@ -68,6 +71,7 @@ knitr::opts_chunk$set(
   dev.args = list(type = "cairo-png")
 )
 TRIAL <- params$pTRIAL
+count_t <- params$count
 ```
 
 ```{r}
@@ -186,7 +190,9 @@ timepoint_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
 
 
 ```{r}
-clust_name <- file.path(workingDir,'ONLY_ALL','cluster_reports',paste0("only_",TRIAL,"_long_clusters.rds"))
+groups_t <- ifelse(count_t=='single',"patient","specimen")
+
+clust_name <- file.path(workingDir,'ONLY_ALL','cluster_reports',paste0("only_",TRIAL,"_long_clusters_",count_t,".rds"))
 
 is_cache <- FALSE
 if(file.exists(clust_name)) {
@@ -197,7 +203,7 @@ if(file.exists(clust_name)) {
 
 if( !is_cache ) {
   scan_sites <- gintools:::scan_format(
-  tdn_sites, timepoint_sites, grouping = "patient") # use "patient" for the same insertion in multiple timepoints on the same patient to be counted as one, use "specimen" to be counted multiple times
+  tdn_sites, timepoint_sites, grouping = groups_t) # use "patient" for the same insertion in multiple timepoints on the same patient to be counted as one, use "specimen" to be counted multiple times
   
 scanned_clus <- geneRxCluster::gRxCluster(
   object = scan_sites$chr, 
@@ -223,6 +229,8 @@ scanned_clus <- geneRxCluster::gRxCluster(
 ```
 
 This report list the clusters of insertion sites identified using Scan Statistics ([**Berry *et al.* 2014**](https://academic.oup.com/bioinformatics/article/30/11/1493/282534)) as significantly different between Pre- and Post-infusion samples.
+
+If an insertion site is found in multiple samples (time points) from the same patient within the same group (Pre- or Post-infusion), they are counted `r ifelse(count_t=='single',"only once.","multiple times.")`
 
 The table has the following columns:
 
