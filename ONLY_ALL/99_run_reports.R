@@ -46,7 +46,7 @@ tdn_sites <- cond_uniq_sites[cond_uniq_sites$timepoint == "d0"]
 timepoint_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
 
 library(rtracklayer)
-export(timepoint_sites,file.path(workingDir,'BED','ALL_tp.bed'),'bb')
-export(tdn_sites,file.path(workingDir,'BED','ALL_tdn.bed'),'bb')
+export(timepoint_sites,file.path(workingDir,'BED','hg38','ALL_tp.bb'),'bb')
+export(tdn_sites,file.path(workingDir,'BED','hg38','ALL_tdn.bb'),'bb')
 
 
