@@ -29,11 +29,24 @@ run_cluster_report('CALL','multi')
 
 ### generate bed files
 if(!exists('workingDir')) {workingDir <- "/home/ubuntu/data/CART19/CART19_from_git2"}
-
+library(tidyverse)
+library(GenomicRanges)
 TRIAL <-'ALL'
-cond_uniq_sites <- readRDS(file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_condensed_intsites.rds")))
+cond_uniq_sites_tmp <- readRDS(file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_condensed_intsites.rds")))
+save_seqinfo <- seqinfo(cond_uniq_sites_tmp)
+cond_uniq_sites <- cond_uniq_sites_tmp %>% 
+  as.data.frame() %>%
+  head() %>% 
+  select(c(seqnames,start,end,strand,estAbund)) %>%
+  dplyr::rename('score'=estAbund) %>% 
+  GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = T,seqinfo = save_seqinfo)
+
+#cond_uniq_sites$score <- cond_uniq_sites$estAbund
 tdn_sites <- cond_uniq_sites[cond_uniq_sites$timepoint == "d0"]
 timepoint_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
 
 library(rtracklayer)
-export(timepoint_sites,file.path(workingDir,'BED','ALL_tp.bed'),'bed',trackLine = NULL)
+export(timepoint_sites,file.path(workingDir,'BED','ALL_tp.bed'),'bb')
+export(tdn_sites,file.path(workingDir,'BED','ALL_tdn.bed'),'bb')
+
+
