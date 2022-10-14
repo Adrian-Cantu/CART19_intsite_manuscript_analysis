@@ -1,21 +1,26 @@
 ---
+params:
+  pTRIAL: "ALL"
+  tPART: 'NoNE'
+#title: "r params$tPART Patients"
 title: |
-    | Genes of interest marked by vector integration
-    | All ALL Patients and 
-    | Response Groups (CR/PRtd & PR/NR & NA)
+  | Genes of interest marked by vector integration
+  | `r params$tPART` Patients and
+  | Response Groups (CR/PRtd & PR/NR & NA)
 author: "Adrian Cantu (Adapted from Christopher Nobles)"
 date: "`r format(Sys.time(), '%Y %B %d')`"
+
 output: 
   pdf_document:
 #    latex_engine: lualatex
-    toc: true
-    keep_md: true
-    keep_tex: true
-    number_sections: false
-    toc_depth: 2
-    fig_caption: true
-    df_print: default
-    highlight: espresso
+    # toc: true
+    # keep_md: true
+    # keep_tex: true
+    # number_sections: false
+    # toc_depth: 2
+    # fig_caption: true
+    # df_print: default
+    # highlight: espresso
 header-includes: 
   - \usepackage{float,indentfirst,booktabs,longtable,array,multirow,pdflscape,tabu}
   - \usepackage[normalem]{ulem}
@@ -23,6 +28,16 @@ header-includes:
   - \setlength{\parindent}{2em}
 fontsize: 11pt
 geometry: margin=0.75in
+knit: (
+  function(inputFile, encoding) { 
+    
+    ptrial <- 'CALL'
+
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      params      = list(pTRIAL=ptrial,tPART=ifelse(ptrial=='ALL','ALL',ifelse(ptrial=='CLL','CLL',ifelse(ptrial=='CALL','ALL and CLL','none')))),      
+      output_file = paste(ptrial,'_goi_', Sys.Date(), '.pdf', sep='')) })
 ---
 
 ------------------------------------------------------------------------
@@ -79,7 +94,8 @@ if (is.null(opts_knit$get("rmarkdown.pandoc.to"))) {
 } else {
   doc_format <-  opts_knit$get("rmarkdown.pandoc.to")
 }
-
+TRIAL <- params$pTRIAL
+top_ll <- 100 # number of top genes to take from longitudinal
 ```
 
 ```{r analysis, include=FALSE}
@@ -293,7 +309,7 @@ custom_theme <- theme_bw() +
 #file <- grep("specimen_data", data_files, value = TRUE)
 #specimen_data <- readRDS(file.path(outputDir, file)) #TOCHANGE maybe never used?
 
-cond_uniq_sites <- readRDS(file.path(workingDir,'ONLY_ALL',"only_ALL_condensed_intsites.rds")) #TODO
+cond_uniq_sites <- readRDS(file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_condensed_intsites.rds"))) #TODO
 # I need to replace this with my own data
 #cond_uniq_sites %>% as.data.frame(row.names = NULL) %>% head()
 # cond_uniq_sites <- cond_uniq_sites[
@@ -306,7 +322,7 @@ cond_uniq_sites <- readRDS(file.path(workingDir,'ONLY_ALL',"only_ALL_condensed_i
 #cluster_list <- readRDS(file.path(outputDir, "cart19_clusters.rds")) #TODO, not sure where this comes from (scan stats)
 
 gene_stats <- read.csv( # TODO, not sure where this comes from
-    file.path(workingDir,'ONLY_ALL',"only_ALL_cart19_gene_stats.csv")) %>%
+    file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_cart19_gene_stats.csv"))) %>%
   dplyr::mutate(gene_name = alias_arbiter(
     IDs = gene_name,
     RefIDs = hgnc_complete$symbol,
@@ -314,7 +330,7 @@ gene_stats <- read.csv( # TODO, not sure where this comes from
     sep = "|", remove_absent_IDs = NULL, quiet = TRUE))
 
 gene_impact <- readRDS( # TODO, not sure where this comes from
-    file.path(workingDir,'ONLY_ALL',"only_ALL_cart19_gene_impact.rds")) %>%
+    file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_cart19_gene_impact.rds"))) %>%
   dplyr::select(
     -ort_fisher_test, -ort_fisher_test_CR, -ort_fisher_test_NR
   ) %>%
@@ -586,34 +602,45 @@ kegg2.1$grp <- cluster_by_list_similarity(
 ```{r analysis3}
 
 ## Identify genes observed over multiple timepoints within patients ----
+# df3 <- gene_impact %>%
+#   dplyr::filter(
+#     TP_num_patients >= 3,
+#     TDN_num_patients>=3,
+#     TP_num_sites >= 10,
+#     TDN_num_sites >= 10,
+#     max_span > 1,
+#     max_time > 20
+#   )
+
+# changed to use all timepoints
+
 df3 <- gene_impact %>%
   dplyr::filter(
-    TP_num_patients >= 2,
-    TP_num_sites >= 10,
-    max_span > 1,
-    max_time > 90
-  )
-
-df3.1 <- df3 %>%
-  dplyr::select(
-    gene_name, long_count, max_time, max_span, pct_chg, TP_peak_abund
+    TP_TDN_num_patients >= 3,
+    TP_TDN_num_sites >= 3,
+    TP_TDN_sum_abund >= 10,
+#    TP_TDN_max_span>5
   )
 
 df3.2 <- df3 %>%
   dplyr::arrange(
-    desc(max_span), desc(max_time), desc(long_count), desc(TP_num_sites),
-    desc(TP_num_patients), On_Onco_List
+    desc(TP_TDN_time_top3avg),desc(TP_TDN_max_span), desc(max_time), desc(TP_TDN_long_count), desc(TP_TDN_num_sites),
+    desc(TP_TDN_num_patients), On_Onco_List
   ) %>%
   dplyr::select(
-    gene_name, max_span, max_time, long_count, TP_num_patients, TP_num_sites,
-    TP_peak_abund, On_Onco_List
+    gene_name, TP_TDN_time_top3avg,TP_TDN_max_span, max_time, TP_TDN_long_count, TP_TDN_num_patients, TP_TDN_num_sites,
+    TP_TDN_peak_abund,TP_TDN_peak_relAbund ,On_Onco_List
   ) %>%
+  dplyr::mutate(TP_TDN_peak_relAbund=paste0(as.character(round(TP_TDN_peak_relAbund,digits = 2)),'%'),
+      TP_TDN_time_top3avg=round(TP_TDN_time_top3avg,digits = 2) ) %>% 
   dplyr::rename(
-    "Gene" = gene_name, "unique Obs." = long_count, "Time Span" = max_span,
-    "Longest Time" = max_time, "Num. Patients" = TP_num_patients,
-    "Patient Sites" = TP_num_sites, "Peak Abund." = TP_peak_abund,
-    "Onco-Related" = On_Onco_List
+    "Gene" = gene_name, "Num. Timepoints" = TP_TDN_long_count, "Time Span" = TP_TDN_max_span,
+    "Longest Time" = max_time, "Patients" = TP_TDN_num_patients,
+    "Sites" = TP_TDN_num_sites, "Max Abund." = TP_TDN_peak_abund,
+    "Max RelAbund" = TP_TDN_peak_relAbund,
+    "Onco-Related" = On_Onco_List, "t3avg"=TP_TDN_time_top3avg
   )
+
 
 go3.2 <- fisher_hyper_GO_test(
   df3.2$Gene, all_GOBP_list, odds = FALSE, p_adjust = 'BH',
@@ -656,10 +683,10 @@ potential_genes <- list(
   "Enrichment" = df1.2$Gene,
   "Depletion" = df1.4$Gene,
   "Abundance" = df2.2$Gene,
-  "Longitudinal" = df3.2$Gene,
+  "Longitudinal" = df3.2$Gene[1:top_ll],
   #"Clusters" = df4.1$Gene,
   "Composite" = unique(c(
-    df1.2$Gene, df2.2$Gene, df3.2$Gene #, df4.1$Gene
+    df1.2$Gene, df2.2$Gene, df3.2$Gene[1:top_ll] #, df4.1$Gene
   ))
 )
 
@@ -864,7 +891,8 @@ kegg_heatmap_data <- as.data.frame(kegg_term_matrix) %>%
     path_id = row.names(.),
     KEGG_Term = kegg_term_data$KEGG_Term[
       match(path_id, kegg_term_data$path_id)],
-    f_kegg_term = stringr::str_extract(KEGG_Term, "[\\w\\s-,]{30}"),
+#    f_kegg_term = stringr::str_extract(KEGG_Term, "[\\w\\s-,]{30}"),
+    f_kegg_term = KEGG_Term,
     f_kegg_term = ifelse(
       is.na(f_kegg_term), KEGG_Term, paste0(f_kegg_term, "...")),
     f_kegg_term = factor(f_kegg_term, levels = f_kegg_term)
@@ -958,49 +986,49 @@ df7_list <- df7_list[sapply(df7_list, nrow) > 0]
 
 ```{r writeResults, include=FALSE}
 
-output_impact <- dplyr::select(
-    df6, -TDN_sum_abund, -TP_sum_abund, -count, -tcount, -TDN_num_pats_CR,
-    -TDN_num_pats_NR, -TP_num_pats_CR, -TP_num_pats_NR, -TDN_num_sites_CR,
-    -TDN_num_sites_NR, -TP_num_sites_CR, -TP_num_sites_NR, -TDN_peak_abund_CR,
-    -TDN_peak_abund_NR, -TP_peak_abund_CR, -TP_peak_abund_NR, -TDN_sum_abund_CR,
-    -TDN_sum_abund_NR, -TP_sum_abund_CR, -TP_sum_abund_NR, -max_span,
-    -TDN_freq_CR, -TDN_freq_NR, -TP_freq_CR, -TP_freq_NR, -freq_diff_CR,
-    -freq_diff_NR, -pct_chg_CR, -pct_chg_NR, -Top_1pc_Abund, -Top_10pc_Abund
-  ) %>%
-  dplyr::mutate(
-    gene_name = paste0("'", gene_name),
-    TDN_peak_relAbund = round(TDN_peak_relAbund, digits = 3),
-    TP_peak_relAbund = round(TP_peak_relAbund, digits = 3),
-    abund_gini = round(abund_gini, digits = 3),
-    pct_chg = round(pct_chg, digits = 1)) %>%
-  dplyr::rename(
-    "Genomic_Loci" = loci, "Gene_Name" = gene_name,
-    "Gene_Orientation" = gene_ort, "Gene_Width_(kb)" = gene_width,
-    "Obs_TDN_Products" = TDN_num_patients, "Obs_Patients" = TP_num_patients,
-    "Num_Sites_TDN" = TDN_num_sites, "Num_Sites_Patients" = TP_num_sites,
-    "Peak_Abund_TDN" = TDN_peak_abund, "Peak_Abund_Patients" = TP_peak_abund,
-    "Peak_RelAbund_TDN" = TDN_peak_relAbund,
-    "Peak_RelAbund_Patients" = TP_peak_relAbund,
-    "Longitudinal_Count" = long_count, "Last_Timepoint" = max_time,
-    "Abund_Gini" = abund_gini, "Freq_TDN_Sites" = TDN_freq,
-    "Freq_Patient_Sites" = TP_freq, "Freq_Difference" = freq_diff,
-    "Percent_Freq_Change" = pct_chg, "Enrichment" = enr_freq,
-    "Depletion" = dep_freq, "Abundance" = abund, "Longitudinal" = long,
-    #"Cluster" = clust,
-    "Criteria" = crit_id
-  ) %>%
-  as.data.frame()
-
-unlink(list.files(
-  path = outputDir, pattern = "_cart19_goi_data.csv", full.names = TRUE
-))
-
-write.csv(
-  output_impact,
-  file = file.path(paste0(gsub("-", "", Sys.Date()), "_cart19_goi_data.csv")),
-  quote = TRUE,
-  row.names = FALSE
-)
+# output_impact <- dplyr::select(
+#     df6, -TDN_sum_abund, -TP_sum_abund, -count, -tcount, -TDN_num_pats_CR,
+#     -TDN_num_pats_NR, -TP_num_pats_CR, -TP_num_pats_NR, -TDN_num_sites_CR,
+#     -TDN_num_sites_NR, -TP_num_sites_CR, -TP_num_sites_NR, -TDN_peak_abund_CR,
+#     -TDN_peak_abund_NR, -TP_peak_abund_CR, -TP_peak_abund_NR, -TDN_sum_abund_CR,
+#     -TDN_sum_abund_NR, -TP_sum_abund_CR, -TP_sum_abund_NR, -max_span,
+#     -TDN_freq_CR, -TDN_freq_NR, -TP_freq_CR, -TP_freq_NR, -freq_diff_CR,
+#     -freq_diff_NR, -pct_chg_CR, -pct_chg_NR, -Top_1pc_Abund, -Top_10pc_Abund
+#   ) %>%
+#   dplyr::mutate(
+#     gene_name = paste0("'", gene_name),
+#     TDN_peak_relAbund = round(TDN_peak_relAbund, digits = 3),
+#     TP_peak_relAbund = round(TP_peak_relAbund, digits = 3),
+#     abund_gini = round(abund_gini, digits = 3),
+#     pct_chg = round(pct_chg, digits = 1)) %>%
+#   dplyr::rename(
+#     "Genomic_Loci" = loci, "Gene_Name" = gene_name,
+#     "Gene_Orientation" = gene_ort, "Gene_Width_(kb)" = gene_width,
+#     "Obs_TDN_Products" = TDN_num_patients, "Obs_Patients" = TP_num_patients,
+#     "Num_Sites_TDN" = TDN_num_sites, "Num_Sites_Patients" = TP_num_sites,
+#     "Peak_Abund_TDN" = TDN_peak_abund, "Peak_Abund_Patients" = TP_peak_abund,
+#     "Peak_RelAbund_TDN" = TDN_peak_relAbund,
+#     "Peak_RelAbund_Patients" = TP_peak_relAbund,
+#     "Longitudinal_Count" = long_count, "Last_Timepoint" = max_time,
+#     "Abund_Gini" = abund_gini, "Freq_TDN_Sites" = TDN_freq,
+#     "Freq_Patient_Sites" = TP_freq, "Freq_Difference" = freq_diff,
+#     "Percent_Freq_Change" = pct_chg, "Enrichment" = enr_freq,
+#     "Depletion" = dep_freq, "Abundance" = abund, "Longitudinal" = long,
+#     #"Cluster" = clust,
+#     "Criteria" = crit_id
+#   ) %>%
+#   as.data.frame()
+# 
+# unlink(list.files(
+#   path = outputDir, pattern = "_cart19_goi_data.csv", full.names = TRUE
+# ))
+# 
+# write.csv(
+#   output_impact,
+#   file = file.path(paste0(gsub("-", "", Sys.Date()), "_cart19_goi_data.csv")),
+#   quote = TRUE,
+#   row.names = FALSE
+# )
 
 ```
 
@@ -1022,7 +1050,7 @@ In this report, we mined the data collected from integration site sequencing for
 
 -   **Clonal Abundance** can be determined during analysis by quantifying the number of sites of linker ligation associated with each unique integration site. This method is further described in [**Berry *et al.* 2012**](https://www.ncbi.nlm.nih.gov/pubmed/22238265). This allows clonal expansion to be quantified. The top 1% of the genes were selected for study based on their maximal peak clonal abundance.
 
--   **Longitudinal Observation** of clones is the quantification of observed timespans and last observed timepoints. The maximum value for clones within a gene were considered for characterization of the gene in this analysis. Genes were only considered if there were 10 or more integration sites isolated from at least two different patient samples. Genes were also not considered if they only consited of clones which were observed once or the last observed timepoint was less than 90 days from initial infusion.
+-   **Longitudinal Observation** Longitudinal gene of interest are those that have insertion sites in at least 3 different positions in at least 3 patients. Additionally, a cutoff of at least 10 independent sonic breaks is imposed and only the top `r top_ll`by average of last time point for the 3 latest insertion sites are selected.
 
 A point to keep in mind through all this analysis is that integration sites are sampled from a larger population. It would be rare for all integration sites in a sample to be represented in the sequence data.
 
@@ -1116,7 +1144,7 @@ Gene Ontologies were extracted from the `GO.db` R-package (v3.14). KEGG pathways
 # Comprehensive Genes of Interest Table
 
 ```{r sup_table}
-df6 %>%
+df8 <- df6 %>%
   dplyr::mutate(
     seqnames = stringr::str_extract(loci, "[\\w]+"),
     range = stringr::str_extract(loci, "[0-9:]+$"),
@@ -1140,7 +1168,8 @@ df6 %>%
     "Peak Abund." = TP_peak_abund,
     "Long. Obs." = max_span,
     "Criteria" = crit_id
-  ) %>%
+  ) 
+df8 %>%
   kable(
     format = "latex", booktabs = TRUE, longtable = TRUE,
     caption = "Table of all genes identified within analysis.",
@@ -1153,3 +1182,15 @@ df6 %>%
   landscape()
 
 ```
+
+```{r}
+#df6
+
+wb <- openxlsx::createWorkbook()
+openxlsx::addWorksheet(wb, paste0('goi_',TRIAL))
+openxlsx::writeDataTable(wb,paste0('goi_',TRIAL),df8)
+openxlsx::saveWorkbook(wb,
+  file.path(paste0('goi_comprehensive_',TRIAL,'_',format(Sys.time(), "%Y%m%d"),'.xlsx')),
+  overwrite = TRUE)
+```
+

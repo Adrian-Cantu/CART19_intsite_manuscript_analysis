@@ -1,0 +1,256 @@
+---
+params: 
+    pTRIAL: "ALL"
+title: 'Longitudinal `r params$pTRIAL`'
+#author: "Adrian Cantu (Adapted from Christopher Nobles)"
+date: "`r format(Sys.time(), '%Y %B %d')`"
+output: 
+  pdf_document:
+#    latex_engine: lualatex
+    toc: false
+#    keep_md: true
+#    keep_tex: true
+    number_sections: false
+    toc_depth: 2
+    fig_caption: true
+    df_print: default
+    highlight: espresso
+header-includes: 
+  - \usepackage{float,indentfirst,booktabs,longtable,array,multirow,pdflscape,tabu}
+  - \usepackage[normalem]{ulem}
+  - \setlength{\defaultaddspace}{0em}
+  - \setlength{\parindent}{2em}
+fontsize: 11pt
+geometry: margin=0.75in
+knit: (
+  function(inputFile, encoding) { 
+  
+    ptrial <- 'CALL'
+  
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      params      = list(pTRIAL = ptrial),      
+      output_file = paste(ptrial,'_logitudinal_', Sys.Date(), '.pdf', sep='')) })
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(kableExtra)
+
+if(!exists('workingDir')) {workingDir <- "/home/ubuntu/data/CART19/CART19_from_git2"}
+if(!exists('utilsDir')) {utilsDir <- "/home/ubuntu/data/CART19/CART19_from_git2/utils"}
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  fig.align = "center",
+  comment = "",
+  echo = FALSE,
+  warning = FALSE,
+  error = TRUE,
+  message = FALSE,
+  cache = FALSE,
+  dpi = 300,
+  dev = "png",
+  results = "asis",
+  fig.pos = "H",
+  fig.width = 7,
+  dev.args = list(type = "cairo-png")
+)
+TRIAL <- params$pTRIAL
+nnn<-500 # max cutoff to show in the plot (will only affect drowing, not results)
+p_b <- 0.2 # proportion of total breaks used to define cutoff
+```
+
+
+```{r}
+# Import HGNC reference data for annotation and consistency ----
+hgnc_complete <- data.table::fread(
+  paste0("zcat ", file.path(utilsDir, "hgnc_complete_set.180207.txt.gz")),
+  sep = "\t", header = TRUE, 
+  select = c(
+    "HGNC ID", "Approved Symbol", "Approved Name", "Locus Group", 
+    "Locus Type", "Synonyms", "Previous Symbols", "Entrez Gene ID", 
+    "Ensembl Gene ID", "RefSeq (supplied by NCBI)", 
+    "UniProt ID (supplied by UniProt)"
+  ),
+  data.table = FALSE
+)
+
+names(hgnc_complete) <- c(
+  "hgnc_id", "symbol", "name", "locus_group", "locus_type", "alias_symbol", 
+  "prev_symbol", "entrez_id", "ensembl_gene_id", "refseq_accession", 
+  "uniprot_ids"
+)
+
+hgnc_complete <- dplyr::filter(hgnc_complete, !grepl("withdrawn", symbol)) %>%
+  dplyr::mutate(
+    kegg_id = paste0("hsa:", entrez_id),
+    entrez_id = paste0(entrez_id, ":EZID"),
+    alias_symbol = gsub(", ", "|", alias_symbol),
+    prev_symbol = gsub(", ", "|", prev_symbol),
+    extended_alias = paste0(
+      alias_symbol, "|", prev_symbol, "|", ensembl_gene_id, "|", 
+      refseq_accession, "|", uniprot_ids))
+
+```
+
+```{r}
+# redoo relevant parts of gene impact
+# gene_impact %>% select(TP_TDN_max_span,max_span,max_time,TP_TDN_max_time)
+# df3 %>% select(TP_TDN_max_span,max_span,TP_num_patients,TDN_num_patients,TP_TDN_num_patients)
+# stats_tp_tdn %>% filter(TP_TDN_first_time!=TP_TDN_last_time)
+#df3
+```
+
+
+```{r}
+
+gene_impact_tmp <- readRDS( # TODO, not sure where this comes from
+  file.path(workingDir,paste0('ONLY_',TRIAL),
+            paste0("only_",TRIAL,"_cart19_gene_impact.rds"))) 
+
+
+gene_impact <- gene_impact_tmp %>%
+  dplyr::select(
+    -ort_fisher_test, -ort_fisher_test_CR, -ort_fisher_test_NR
+  ) %>%
+  #dplyr::filter(!gene_name %in% excluded_gene_names) %>%
+  dplyr::mutate(gene_name = spraphal::alias_arbiter(
+    IDs = gene_name,
+    RefIDs = hgnc_complete$symbol,
+    aliasIDs = hgnc_complete$extended_alias,
+    sep = "|", remove_absent_IDs = NULL, quiet = TRUE))
+
+
+total_breaks_v <- gene_impact %>%
+    dplyr::filter(
+      TP_TDN_num_patients >= 3,
+      TP_TDN_num_sites >= 3,
+    ) %>%
+  pull(TP_TDN_sum_abund
+
+       ) %>% 
+  sort(.,decreasing = TRUE)
+total_breaks <-   sum(total_breaks_v)
+
+first_top <- which(cumsum(total_breaks_v) > total_breaks*p_b)[1]
+
+break_num_gene <- tibble(x=c(1:nnn),
+  y= sapply(c(1:nnn), function(xx){
+  gene_impact %>%
+    dplyr::filter(
+      TP_TDN_num_patients >= 3,
+      TP_TDN_num_sites >= 3,
+      TP_TDN_sum_abund >= xx,
+    ) %>%
+  nrow() 
+}))
+
+break_rank_gene <- tibble(x=c(1:length(total_breaks_v)),
+  y= total_breaks_v)
+
+
+df3 <- gene_impact %>%
+  dplyr::filter(
+    TP_TDN_num_patients >= 3,
+    TP_TDN_num_sites >= 3,
+    TP_TDN_sum_abund >= total_breaks_v[first_top],
+#    TP_TDN_max_span>5
+  )
+
+df3.2 <- df3 %>%
+  dplyr::arrange(
+    desc(TP_TDN_time_top3avg),desc(TP_TDN_max_span), desc(max_time), desc(TP_TDN_long_count), desc(TP_TDN_num_sites),
+    desc(TP_TDN_num_patients), On_Onco_List
+  ) %>%
+  dplyr::select(
+    gene_name, TP_TDN_time_top3avg,TP_TDN_max_span, max_time, TP_TDN_long_count, TP_TDN_num_patients, TP_TDN_num_sites,
+    TP_TDN_peak_abund,TP_TDN_peak_relAbund ,On_Onco_List
+  ) %>%
+  dplyr::mutate(TP_TDN_peak_relAbund=paste0(as.character(round(TP_TDN_peak_relAbund,digits = 2)),'%'),
+      TP_TDN_time_top3avg=round(TP_TDN_time_top3avg,digits = 2) ) %>% 
+  dplyr::rename(
+    "Gene" = gene_name, "Num. Timepoints" = TP_TDN_long_count, "Time Span" = TP_TDN_max_span,
+    "Longest Time" = max_time, "Patients" = TP_TDN_num_patients,
+    "Sites" = TP_TDN_num_sites, "Max Abund." = TP_TDN_peak_abund,
+    "Max RelAbund" = TP_TDN_peak_relAbund,
+    "Onco-Related" = On_Onco_List, "t3avg"=TP_TDN_time_top3avg
+  )
+
+```
+
+Insertion sites that are close to Genes (less than 5,000bp) are grouped and labeled with that
+gene name. Longitudinal gene of interest are those that have insertion sites in at least 3 different positions in at least 3 patients. Additionally, a cutoff of at least `r total_breaks_v[first_top]` independent sonic breaks is imposed. This number is chosen such that the selected genes represent at lease `r  paste0(as.character(p_b*100),'%')` of all sonic breaks (see plot)  
+The table has the following columns:
+
+* **gene**: Gene name according to the HUGO Gene nomenclature committee (version from 2018-02-07)
+* **t3avg**: average of last time point for the 3 latest insertion sites.
+* **Time Span**: Maximum time between the first and last sample that have the same insertion in this gene and originate from the same patient.
+* **Longest time**: Last time point(in days) where insertion are observed.
+* **Num. Timepoints**: Number of times points the most common insertion site is observed.
+* **Patients**: Number of patient with at least one insertion near this gene.
+* **Sites**: Number of distinct insertion positions.
+* **Max Abund**: Maximum sonic abundance observed for an insertion site near this gene.
+* **Max RelAbund**: Maximum relative abundance observed for an insertion site near this gene.
+* **Onco-Related**: Whether the gene is in the cancer related list
+
+
+```{r fig1, fig.cap="Effect of filtering by sonic breaks", out.height='40%'}
+ggplot(data=break_num_gene, aes(x=x, y=y)) +
+  geom_line() +
+  theme_classic() +
+  labs(x="Required sonic breaks",
+       y = "Number of genes") +
+  geom_vline(xintercept = total_breaks_v[first_top],linetype = "dashed") +
+  geom_text(aes(total_breaks_v[first_top]-nnn*0.01,length(total_breaks_v)/2,
+                label = paste0('cutoff=',total_breaks_v[first_top]," breaks"),hjust=1))+
+  geom_hline(yintercept = first_top,linetype = "dashed") +
+    geom_text(aes(total_breaks_v[first_top]-nnn*0.01,first_top,
+                label = paste0('cutoff=',first_top," genes"),vjust=1,hjust=1))+
+  scale_x_continuous(expand = c(0,NA)) 
+#  scale_y_continuous(expand = c(0.5,NA)) 
+
+```
+
+```{r fig2, fig.cap="breaks vs gene rank", out.height='40%'}
+ggplot(data=break_rank_gene,aes(x=x,y=y)) +
+  geom_line() +
+  theme_classic() +
+  scale_x_log10() +
+  geom_vline(xintercept = first_top,linetype = "dashed") +
+  geom_text(aes(first_top,max(total_breaks_v)/2,
+                label = paste0('cutoff=',first_top,' genes'),hjust=1)) +
+    labs(x="Gene rank (log10)",
+       y = "Sonic Breaks")
+```
+
+
+\newpage
+## Longitudinal Observation
+
+```{r long_obs_tbl, eval=FALSE, include=FALSE, results='asis'}
+kable(
+    head(df3.2, n = 50), format = "latex", booktabs = TRUE, 
+    caption = paste(
+      "Table of top", nrow(head(df3.2, n = 50)), 
+      "genes identified by longitudinal observations of patients samples."), 
+    align = "c"
+  ) %>%
+  kableExtra::kable_styling(
+    latex_options = c("hold_position","scale_down","striped"),
+    font_size = 9
+  )
+```
+
+
+```{r long_obs_tbl2,results='asis'}
+kbl(df3.2, longtable = T, booktabs = T, caption = paste0(first_top," Genes identified by longitudinal observations.")) %>%
+kable_styling(latex_options = c("repeat_header","striped"),font_size = 5.5)
+
+```
+
+
+
+
+
