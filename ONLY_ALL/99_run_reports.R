@@ -36,9 +36,10 @@ cond_uniq_sites_tmp <- readRDS(file.path(workingDir,paste0('ONLY_',TRIAL),paste0
 save_seqinfo <- seqinfo(cond_uniq_sites_tmp)
 cond_uniq_sites <- cond_uniq_sites_tmp %>% 
   as.data.frame() %>%
-  head() %>% 
-  select(c(seqnames,start,end,strand,estAbund)) %>%
-  dplyr::rename('score'=estAbund) %>% 
+#  head() %>% 
+  select(c(seqnames,start,end,strand,estAbund,timepoint)) %>%
+  dplyr::rename('score'=estAbund) %>%
+#  mutate(estAbund=NULL) %>% 
   GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = T,seqinfo = save_seqinfo)
 
 #cond_uniq_sites$score <- cond_uniq_sites$estAbund
@@ -49,4 +50,6 @@ library(rtracklayer)
 export(timepoint_sites,file.path(workingDir,'BED','hg38','ALL_tp.bb'),'bb')
 export(tdn_sites,file.path(workingDir,'BED','hg38','ALL_tdn.bb'),'bb')
 
+#export(timepoint_sites,file.path(workingDir,'BED','hg38','ALL_tp.bed'),'bed')
+#export(tdn_sites,file.path(workingDir,'BED','hg38','ALL_tdn.bed'),'bed')
 
