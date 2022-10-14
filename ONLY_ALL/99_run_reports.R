@@ -29,3 +29,11 @@ run_cluster_report('CALL','multi')
 
 ### generate bed files
 if(!exists('workingDir')) {workingDir <- "/home/ubuntu/data/CART19/CART19_from_git2"}
+
+TRIAL <-'ALL'
+cond_uniq_sites <- readRDS(file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_condensed_intsites.rds")))
+tdn_sites <- cond_uniq_sites[cond_uniq_sites$timepoint == "d0"]
+timepoint_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
+
+library(rtracklayer)
+export(timepoint_sites,file.path(workingDir,'BED','ALL_tp.bed'),'bed',trackLine = NULL)
