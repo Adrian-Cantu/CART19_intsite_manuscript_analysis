@@ -1190,7 +1190,7 @@ wb <- openxlsx::createWorkbook()
 openxlsx::addWorksheet(wb, paste0('goi_',TRIAL))
 openxlsx::writeDataTable(wb,paste0('goi_',TRIAL),df8)
 openxlsx::saveWorkbook(wb,
-  file.path(paste0('goi_comprehensive_',TRIAL,'_',format(Sys.time(), "%Y%m%d"),'.xlsx')),
+  file.path(workingDir,'ONLY_ALL','goi_reports',paste0('goi_comprehensive_',TRIAL,'_',format(Sys.time(), "%Y%m%d"),'.xlsx')),
   overwrite = TRUE)
 ```
 
