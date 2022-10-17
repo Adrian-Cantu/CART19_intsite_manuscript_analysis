@@ -49,23 +49,6 @@ run_cluster_report('CALL','multi')
 if(!exists('workingDir')) {workingDir <- "/home/ubuntu/data/CART19/CART19_from_git2"}
 library(tidyverse)
 library(GenomicRanges)
-TRIAL <-'ALL'
-cond_uniq_sites_tmp <- readRDS(file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_condensed_intsites.rds")))
-save_seqinfo <- seqinfo(cond_uniq_sites_tmp)
-cond_uniq_sites <- cond_uniq_sites_tmp %>% 
-  as.data.frame() %>%
-#  head() %>% 
-  select(c(seqnames,start,end,strand,estAbund,timepoint)) %>%
-  mutate(name=paste0('item_',dplyr::row_number())) %>% 
-  dplyr::rename('score'=estAbund) %>%
-  mutate(itemRgb=ifelse(strand=='+',c('#ff0000'),c('#0000ff'))) %>% 
-#  mutate(estAbund=NULL) %>% 
-  GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = T,seqinfo = save_seqinfo)
-
-#cond_uniq_sites$score <- cond_uniq_sites$estAbund
-tdn_sites <- cond_uniq_sites[cond_uniq_sites$timepoint == "d0"]
-timepoint_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
-
 library(rtracklayer)
 #function to format metadata for bigbed export
 fix_to_bigbed <- function(in_bed) {
@@ -88,23 +71,31 @@ fix_to_bigbed <- function(in_bed) {
 }
 
 
-export(fix_to_bigbed(timepoint_sites),file.path(workingDir,'BED','hg38',paste0(TRIAL,'_tp.bb')),'bb')
-export(fix_to_bigbed(tdn_sites),file.path(workingDir,'BED','hg38',paste0(TRIAL,'_tdn.bb')),'bb')
 
-#export(timepoint_sites,file.path(workingDir,'BED','hg38','ALL_tp.bed'),'bed')
-#export(tdn_sites,file.path(workingDir,'BED','hg38','ALL_tdn.bed'),'bed')
+produce_bed <- function(TRIAL) {
+  cond_uniq_sites_tmp <- readRDS(file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_condensed_intsites.rds")))
+  save_seqinfo <- seqinfo(cond_uniq_sites_tmp)
+  cond_uniq_sites <- cond_uniq_sites_tmp %>% 
+    as.data.frame() %>%
+  #  head() %>% 
+    select(c(seqnames,start,end,strand,estAbund,timepoint)) %>%
+    mutate(name=paste0('item_',dplyr::row_number())) %>% 
+    dplyr::rename('score'=estAbund) %>%
+    mutate(itemRgb=ifelse(strand=='+',c('#ff0000'),c('#0000ff'))) %>% 
+  #  mutate(estAbund=NULL) %>% 
+    GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = T,seqinfo = save_seqinfo)
 
-# hhh <- import.bb(file.path(workingDir,'BED','bigBed9.bb')) %>% 
-#   as.data.frame()
-# 
-# export(hhh %>% GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = T,seqinfo = save_seqinfo),
-#        file.path(workingDir,'BED','hg38',paste0(TRIAL,'_hhh_test.bb')),'bb')
-# 
-# 
-# hhh2 <- import.bb(file.path(workingDir,'BED','bigBed9.bb'))
-# export(hhh2,file.path(workingDir,'BED','hg38',paste0(TRIAL,'_hhh2_test.bb')),'bb')
-# 
-# 
-# hhh3
-# export(hhh3,file.path(workingDir,'BED','hg38',paste0(TRIAL,'_hhh3_test.bb')),'bb')
-# hhh2
+#cond_uniq_sites$score <- cond_uniq_sites$estAbund
+  tdn_sites <- cond_uniq_sites[cond_uniq_sites$timepoint == "d0"]
+  timepoint_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
+  
+  export(fix_to_bigbed(timepoint_sites),file.path(workingDir,'BED','hg38',paste0(TRIAL,'_tp.bb')),'bb')
+  export(fix_to_bigbed(tdn_sites),file.path(workingDir,'BED','hg38',paste0(TRIAL,'_tdn.bb')),'bb')
+  
+}
+
+produce_bed('ALL')
+produce_bed('CLL')
+  
+
+
