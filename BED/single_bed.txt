@@ -1,4 +1,3 @@
-browser position chr16:1,660,081-1,661,483
 browser hide all
 track type=bigBed name="ALL preinfusion" description="  " bigDataUrl=https://raw.githubusercontent.com/Adrian-Cantu/CART19_intsite_manuscript_analysis/master/BED/hg38/ALL_tdn.bb db=hg38 visibility=1 itemRgb=On
 track type=bigBed name="ALL postinfusion" description="  " bigDataUrl=https://raw.githubusercontent.com/Adrian-Cantu/CART19_intsite_manuscript_analysis/master/BED/hg38/ALL_tp.bb db=hg38 visibility=1 itemRgb=On
