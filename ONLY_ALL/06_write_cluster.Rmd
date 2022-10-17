@@ -234,7 +234,7 @@ If an insertion site is found in multiple samples (time points) from the same pa
 
 The table has the following columns:
 
-* **Cluster**: location on the genome
+* **Cluster**: location on the genome. You can click to view in the UCSC genome browser (red marks are on the '+' strand and blue are on the '-' strand)
 * **width**: width of the cluster
 * **num PreInf sites**: number of sites in this interval in the pre-infusion (time 0) samples
 * **num PostInf sites**: number of sites in this interval in the post-infusion (time 0) samples
@@ -247,10 +247,10 @@ The table has the following columns:
 #linebreak(genes_in_cluster,align = 'l',linebreaker = ',')) Clusters identified by longitudinal observations.
 scanned_clus %>% 
   as.data.frame(row.names = NULL) %>% 
-  mutate(cluster=paste0(seqnames,' [',gt23::ppNum(start),'-',gt23::ppNum(end),']')) %>% 
-  select(c(cluster,width,n_sites_tdn,n_sites_tp,target.min,genes_in_cluster)) %>% 
   mutate(width=gt23::ppNum(width)) %>% 
-  mutate(genes_in_cluster=linebreak(genes_in_cluster,align = 'l',linebreaker = ',')) %>% 
+  dplyr::mutate(cluster=paste0('\\href{https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&hgct_customText=https://raw.githubusercontent.com/Adrian-Cantu/CART19_intsite_manuscript_analysis/master/BED/single_bed.txt&position=',seqnames,':',start,'-',end,'}{',seqnames,' [',gt23::ppNum(start),'-',gt23::ppNum(end),']','}')) %>%
+  select(c(cluster,width,n_sites_tdn,n_sites_tp,target.min,genes_in_cluster)) %>% 
+    mutate(genes_in_cluster=linebreak(genes_in_cluster,align = 'l',linebreaker = ',')) %>% 
   dplyr::rename('num PreInf sites'=n_sites_tdn) %>% 
   dplyr::rename('num PostInf sites'=n_sites_tp) %>% 
   dplyr::rename('genes'=genes_in_cluster) %>% 
