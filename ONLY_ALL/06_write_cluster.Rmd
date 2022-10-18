@@ -10,6 +10,8 @@ title: |
   | Response Groups (CR/PRtd & PR/NR & NA)
 #author: "Adrian Cantu (Adapted from Christopher Nobles)"
 date: "`r format(Sys.time(), '%Y %B %d')`"
+urlcolor: blue
+linkcolor: black
 output: 
   pdf_document:
 #    latex_engine: lualatex
@@ -228,16 +230,16 @@ scanned_clus <- geneRxCluster::gRxCluster(
 
 ```
 
-This report list the clusters of insertion sites identified using Scan Statistics ([**Berry *et al.* 2014**](https://academic.oup.com/bioinformatics/article/30/11/1493/282534)) as significantly different between Pre- and Post-infusion samples.
+This report list the clusters of insertion sites identified using Scan Statistics ([**Berry *et al.* 2014**](https://academic.oup.com/bioinformatics/article/30/11/1493/282534)) as significantly different between Pre-infusion (total **`r gt23::ppNum(length(reduce(tdn_sites)))`** sites) and Post-infusion samples (total **`r gt23::ppNum(length(reduce(timepoint_sites)))`** sites). 
 
 If an insertion site is found in multiple samples (time points) from the same patient within the same group (Pre- or Post-infusion), they are counted `r ifelse(count_t=='single',"only once.","multiple times.")`
 
 The table has the following columns:
 
-* **Cluster**: location on the genome. You can click to view in the UCSC genome browser (red marks are on the '+' strand and blue are on the '-' strand)
+* **Cluster**: location on the genome. You can click to view in the UCSC genome browser [red marks are on the '+' strand (increasing chromosome position) and blue are on the '-' strand (decreasing chromosome position)]
 * **width**: width of the cluster
 * **num PreInf sites**: number of sites in this interval in the pre-infusion (time 0) samples
-* **num PostInf sites**: number of sites in this interval in the post-infusion (time 0) samples
+* **num PostInf sites**: number of sites in this interval in the post-infusion samples
 * **target.min**: score of the cluster
 * **genes**: genes that intersect the cluster
 
