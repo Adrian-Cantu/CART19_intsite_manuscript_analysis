@@ -27,8 +27,10 @@ to_run <- expand_grid(x= c('ALL','CLL','CALL'),y= c('RE','na'))
 
 tt<- to_run %>%   
 purrr::pmap(~source(file.path(workingDir,'01_condensed_intsites.R'),local=env(TRIAL=.x,RESP=.y)))
-  
 
+tt<- to_run %>% 
+purrr::pmap(~source(file.path(workingDir,'02_gene_stats.R'),local=env(TRIAL=.x,RESP=.y)))
+#source(file.path(workingDir,'02_gene_stats.R'),local=env(TRIAL='CALL',RESP='RE'))
 
 # cluster reports -------------------
 run_cluster_report <- function(ptrial,group_c) {
