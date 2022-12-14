@@ -23,6 +23,9 @@ library(rlang)
 library(tidyverse)
 if(!exists('workingDir')) {workingDir <- "/home/ubuntu/data/CART19/CART19_from_git2"}
 
+# ALL, CLL, CALL= ALL+CLL
+# whether filter by response class, RE= responders, nRE non responders, na= no filter
+
 to_run <- expand_grid(x= c('ALL','CLL','CALL'),y= c('RE','na')) 
 
 tt<- to_run %>%   
@@ -31,6 +34,48 @@ purrr::pmap(~source(file.path(workingDir,'01_condensed_intsites.R'),local=env(TR
 tt<- to_run %>% 
 purrr::pmap(~source(file.path(workingDir,'02_gene_stats.R'),local=env(TRIAL=.x,RESP=.y)))
 #source(file.path(workingDir,'02_gene_stats.R'),local=env(TRIAL='CALL',RESP='RE'))
+
+tt<- to_run %>% 
+  purrr::pmap(~source(file.path(workingDir,'03_gene_impact.R'),local=env(TRIAL=.x,RESP=.y)))
+
+get_group_title <- function(xx) {
+  if(xx=='ALL') {
+    retval<-'ALL'
+  } else if (xx=='CLL'){
+    retval <- 'CLL'
+  } else if (xx=='CALL') {
+    retval <- 'ALL or CLL'
+  } else {
+    retval <- '----'
+  }
+  return(retval)
+}
+
+get_resp_title <- function(xx) {
+  if(xx=='RE') {
+    retval<-'CR/PRtd'
+  } else if (xx=='nRE'){
+    retval <- 'PR/NR'
+  } else if (xx=='na') {
+    retval <- 'CR/PRtd & PR/NR'
+  } else {
+    retval <- '----'
+  }
+  return(retval)
+}
+
+#if(!exists('TRIAL')) {TRIAL <- 'ALL'} # ALL, CLL, CALL= ALL+CLL
+#if(!exists('RESP')) {RESP <- 'na'} # whether filter by response class, RE= responders, nRE non responders, na= no filter
+tt <- to_run %>% 
+  purrr::pmap(~rmarkdown::render( 
+  input       = '04_test_report.Rmd', 
+  envir       = new.env(), 
+  params      = list(pTRIAL=.x,
+                     pRESP=.y,
+                     tTRIAL=get_group_title(.x),
+                     tRESP=get_resp_title(.y)),      
+  output_file = file.path('goi_reports',paste0(.x,'_',.y,'_goi.pdf'))))
+
 
 # cluster reports -------------------
 run_cluster_report <- function(ptrial,group_c) {
