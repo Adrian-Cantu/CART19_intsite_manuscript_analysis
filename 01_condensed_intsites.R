@@ -23,7 +23,7 @@ CARTSite_Response <- read_excel("CARTSite.Response.BOR.01142022.xlsx",
 # BOR= best overal response
 colnames(CARTSite_Response) <- c('Trial','ID','inf_date','response_date','response_timepoint','BOR','BORc','note')
 
-if( !file.exists('ALL_intSites.rds') ) {
+if( !file.exists('all_intsites_20230113.rds') ) {
   intSites <- getDBgenomicFragments(samples$SpecimenAccNum, 'specimen_management', 'intsites_miseq') %>% 
     as.data.frame() %>% 
     filter(refGenome == 'hg38') %>%
@@ -32,9 +32,9 @@ if( !file.exists('ALL_intSites.rds') ) {
     collapseReplicatesCalcAbunds() %>% 
     annotateIntSites(CPUs = numCores)
   saveRDS(intSites, 'ALL_intSites.rds')
-} else {
-  intSites <- readRDS('ALL_intSites.rds')
 }
+intSites <- readRDS('all_intsites_20230113.rds')
+
 
 #paste0('chr',c(1:22,'X','Y'))
 #condensed_intsites <- readRDS("~/data/CART19/CART19_from_git2/data/condensed_intsites.rds") %>%
@@ -114,7 +114,8 @@ if(RESP=='RE') {
 }
 
 
-new_cond_granges <- new_condensed %>%  # add here ALL filter
+new_cond_granges <- new_condensed %>% 
+  filter(patient!="CHOP959-107") %>% # add here ALL filter
   GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
 
 seqlevels(new_cond_granges) <- paste0("chr", c(1:22, "X", "Y", "M"))

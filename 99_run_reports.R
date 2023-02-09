@@ -68,7 +68,7 @@ get_resp_title <- function(xx) {
 #if(!exists('RESP')) {RESP <- 'na'} # whether filter by response class, RE= responders, nRE non responders, na= no filter
 tt <- to_run %>% 
   purrr::pmap(~rmarkdown::render( 
-  input       = '04_test_report.Rmd', 
+  input       = '04_report.Rmd', 
   envir       = new.env(), 
   params      = list(pTRIAL=.x,
                      pRESP=.y,
@@ -79,9 +79,9 @@ tt <- to_run %>%
 
 # cluster reports -------------------
 run_cluster_report <- function(ptrial,group_c) {
-  if(!exists('workingDir')) {workingDir <- "/home/ubuntu/data/CART19/CART19_from_git2"}
-  inputFile <- file.path(workingDir,'ONLY_ALL',"06_write_cluster.Rmd")
-  outFile <- file.path(workingDir,'ONLY_ALL','cluster_reports',
+  if(!exists('workingDir')) {workingDir <- here::here}
+  inputFile <- file.path(workingDir,"06_write_cluster.Rmd")
+  outFile <- file.path(workingDir,'gene_scan',
                        paste(ptrial,'_Scan_stats_',group_c,'_', Sys.Date(), '.pdf', sep=''))
   rmarkdown::render( 
     input       = inputFile, 

@@ -41,7 +41,7 @@ knit: (
       params      = list(pTRIAL=ptrial,
                          count='single',
                          tPART=ifelse(ptrial=='ALL','ALL',ifelse(ptrial=='CLL','CLL',ifelse(ptrial=='CALL','ALL and CLL','none')))),      
-      output_file = paste(ptrial,'_Scan_stats_single', Sys.Date(), '.pdf', sep='')) })
+      output_file = paste(ptrial,'_Scan_stats_single_', Sys.Date(), '.pdf', sep='')) })
 ---
 
 ```{r setup, include=FALSE}
@@ -183,7 +183,7 @@ scan_fisher_test_ort <- function(score1, score2){
 
 ```{r}
 
-refGenes <- readRDS(file.path('..','utils', "hg38.refSeq.rds"))
+refGenes <- readRDS(here::here('utils', "hg38.refSeq.rds"))
 cond_uniq_sites <- readRDS(file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_condensed_intsites.rds")))
 tdn_sites <- cond_uniq_sites[cond_uniq_sites$timepoint == "d0"]
 timepoint_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
@@ -194,7 +194,7 @@ timepoint_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
 ```{r}
 groups_t <- ifelse(count_t=='single',"patient","specimen")
 
-clust_name <- file.path(workingDir,'ONLY_ALL','cluster_reports',paste0("only_",TRIAL,"_long_clusters_",count_t,".rds"))
+clust_name <- here::here('gene_scan',paste0("only_",TRIAL,"_long_clusters_",count_t,".rds"))
 
 is_cache <- FALSE
 if(file.exists(clust_name)) {
@@ -258,5 +258,21 @@ scanned_clus %>%
   dplyr::rename('genes'=genes_in_cluster) %>% 
   kbl(booktabs = T,longtable = T, escape=FALSE,caption ="Clusters identified by longitudinal observations",linesep = '\\midrule') %>%
   kable_styling(latex_options = c("repeat_header"),font_size = 6)
+```
+
+```{r}
+
+ddf <- scanned_clus %>%
+  as.data.frame() %>% 
+  dplyr::select(c(seqnames,start,end,width,n_sites_tdn,n_sites_tp,target.min,genes_in_cluster)) %>% 
+    dplyr::rename('num PreInf sites'=n_sites_tdn) %>% 
+  dplyr::rename('num PostInf sites'=n_sites_tp) %>% 
+  dplyr::rename('genes'=genes_in_cluster) 
+
+wb <- openxlsx::createWorkbook()
+openxlsx::addWorksheet(wb, paste0('scan_',TRIAL))
+openxlsx::writeDataTable(wb,paste0('scan_',TRIAL),ddf)
+openxlsx::saveWorkbook(wb,here::here('gene_scan',paste0(TRIAL,"_clusters_",count_t,'_',format(Sys.time(), "%Y%m%d"),'.xlsx')),overwrite = TRUE)
+
 ```
 
