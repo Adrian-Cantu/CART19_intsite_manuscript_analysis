@@ -21,11 +21,13 @@
 #### 
 library(rlang)
 library(tidyverse)
-if(!exists('workingDir')) {workingDir <- "/home/ubuntu/data/CART19/CART19_from_git2"}
+if(!exists('workingDir')) {workingDir <- here::here()}
 
 # ALL, CLL, CALL= ALL+CLL
 # whether filter by response class, RE= responders, nRE non responders, na= no filter
 
+
+# generating a grid of all the cancer/response group to compute
 to_run <- expand_grid(x= c('ALL','CLL','CALL'),y= c('RE','na')) 
 
 tt<- to_run %>%   
@@ -33,10 +35,12 @@ purrr::pmap(~source(file.path(workingDir,'01_condensed_intsites.R'),local=env(TR
 
 tt<- to_run %>% 
 purrr::pmap(~source(file.path(workingDir,'02_gene_stats.R'),local=env(TRIAL=.x,RESP=.y)))
-#source(file.path(workingDir,'02_gene_stats.R'),local=env(TRIAL='CALL',RESP='RE'))
+
 
 tt<- to_run %>% 
   purrr::pmap(~source(file.path(workingDir,'03_gene_impact.R'),local=env(TRIAL=.x,RESP=.y)))
+
+#get text for reports
 
 get_group_title <- function(xx) {
   if(xx=='ALL') {
@@ -64,8 +68,7 @@ get_resp_title <- function(xx) {
   return(retval)
 }
 
-#if(!exists('TRIAL')) {TRIAL <- 'ALL'} # ALL, CLL, CALL= ALL+CLL
-#if(!exists('RESP')) {RESP <- 'na'} # whether filter by response class, RE= responders, nRE non responders, na= no filter
+# compile goi reports pdf
 tt <- to_run %>% 
   purrr::pmap(~rmarkdown::render( 
   input       = '04_report.Rmd', 
@@ -106,7 +109,8 @@ run_cluster_report('CALL','single')
 
 
 ### generate bed files ----------------------------
-if(!exists('workingDir')) {workingDir <- "/home/ubuntu/data/CART19/CART19_from_git2"}
+# this part generate the BED files to be able to see the insertion sites in the UCSC genome browser
+# bed files need to be commited and pushed to github for the browser to be able to access them
 library(tidyverse)
 library(GenomicRanges)
 library(rtracklayer)
@@ -133,7 +137,7 @@ fix_to_bigbed <- function(in_bed) {
 
 
 produce_bed <- function(TRIAL) {
-  cond_uniq_sites_tmp <- readRDS(file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_condensed_intsites.rds")))
+  cond_uniq_sites_tmp <- readRDS(here::here('condensed_intsites',paste0(TRIAL,'_na_conintsites.rds')))
   save_seqinfo <- seqinfo(cond_uniq_sites_tmp)
   cond_uniq_sites <- cond_uniq_sites_tmp %>% 
     as.data.frame() %>%

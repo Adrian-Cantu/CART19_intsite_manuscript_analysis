@@ -9,7 +9,7 @@ if(!exists('RESP')) {RESP <- 'na'} # whether filter by response class, RE= respo
 
 
 
-cond_uniq_sites <- readRDS(file.path('condensed_intsites',paste0(TRIAL,'_',RESP,'_conintsites.rds')))
+cond_uniq_sites <- readRDS(here::here('condensed_intsites',paste0(TRIAL,'_',RESP,'_conintsites.rds')))
 
 
 get_top_genes <- function(sites, genes, percent, rank_by){
@@ -160,26 +160,6 @@ top_ten_pc_sonicAbund <- paste(
     rank_by = "estAbund")),
   collapse = ", ")
 
-
-# write.table(
-#   top_one_pc_sonicAbund, 
-#   file = file.path("ALL_top_one_percent_of_gene_ids_by_sonicAbund.txt"),
-#   quote = FALSE,
-#   row.names = FALSE,
-#   col.names = FALSE)
-
-
-
-
-
-
-# top_one_pc_sonicAbund <- as.character(read.table(
-#   file.path("ALL_top_one_percent_of_gene_ids_by_sonicAbund.txt"),
-#   header = FALSE, sep = "\t")[1,1])
-# 
-# top_ten_pc_sonicAbund <- as.character(read.table(
-#   file.path(outputDir, "top_ten_percent_of_gene_ids_by_sonicAbund.txt"),
-#   header = FALSE, sep = "\t")[1,1])
 
 refGenesOrt <- as.data.frame(refGenes, row.names = NULL) %>%
   dplyr::select(name2, strand) %>%

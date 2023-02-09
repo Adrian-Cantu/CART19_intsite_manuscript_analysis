@@ -51,8 +51,8 @@ library(gintools)
 library(GenomicRanges)
 
 
-if(!exists('workingDir')) {workingDir <- "/home/ubuntu/data/CART19/CART19_from_git2"}
-if(!exists('utilsDir')) {utilsDir <- "/home/ubuntu/data/CART19/CART19_from_git2/utils"}
+if(!exists('workingDir')) {workingDir <- here::here()}
+if(!exists('utilsDir')) {utilsDir <- here::here("utils")}
 
 
 
@@ -184,7 +184,8 @@ scan_fisher_test_ort <- function(score1, score2){
 ```{r}
 
 refGenes <- readRDS(here::here('utils', "hg38.refSeq.rds"))
-cond_uniq_sites <- readRDS(file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_condensed_intsites.rds")))
+#cond_uniq_sites <- readRDS(file.path(workingDir,paste0('ONLY_',TRIAL),paste0("only_",TRIAL,"_condensed_intsites.rds")))
+cond_uniq_sites <- readRDS(here::here('condensed_intsites',paste0(TRIAL,'_na_conintsites.rds')))
 tdn_sites <- cond_uniq_sites[cond_uniq_sites$timepoint == "d0"]
 timepoint_sites <- cond_uniq_sites[cond_uniq_sites$timepoint != "d0"]
 ```

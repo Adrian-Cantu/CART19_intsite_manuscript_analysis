@@ -13,6 +13,16 @@ To run the analysis, run `Rscript initiate_analysis.R`, which will subsequenty p
 
 This repository also contains a final INSPIIRED input dataset from the manuscript. Anyone can use this data rather than reprocessing with the INSPIIRED software from the SRA submission (BioProject: PRJNA510570). These data were processed with the [intSiteCaller v1.2.0 software](https://github.com/BushmanLab/intSiteCaller), within the [INSPIIRED suite](https://github.com/BushmanLab/INSPIIRED).
 
+# Custom software
+
+requires custom versions 
+
+```
+devtools::install_github("briatte/ggnet")
+devtools::install_github('cnobles/spraphal')
+```
+
+# session ino
 This source code was executed under the following session information:
 
 ```
@@ -118,6 +128,12 @@ loaded via a namespace (and not attached):
 |:--------:|:---------------:|
 |    ALL   |       ALL       |
 |    CLL   |       CLL       |
-|   GILL   |       Gill      |
 |   CALL   |     ALL,CLL     |
-|   GCALL  |   Gill,ALL,CLL  |
+
+# BORc
+
+| Set name | Included Trials |
+|:--------:|:---------------:|
+|    RE   |     responders      |
+|    nRE   |    non responders       |
+|   na   |     both     |
